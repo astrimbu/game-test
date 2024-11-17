@@ -20,6 +20,7 @@ var platform_jump_position = null  # The position to jump from
 
 @onready var sprite = $Sprite2D
 @onready var animation_player = $AnimationPlayer
+@onready var target_indicator = get_tree().get_root().get_node("World/TargetIndicator")
 
 # Define states
 enum State { IDLE, WALKING, JUMPING, MOVING_TO_TARGET, SHOOTING }
@@ -84,6 +85,8 @@ func handle_idle_state(delta):
 	if Input.is_action_just_pressed("click"):
 		var clicked_pos = get_global_mouse_position()
 		target_position = get_walkable_position(clicked_pos)
+		target_indicator.visible = true
+		target_indicator.global_position = target_position
 		current_state = State.MOVING_TO_TARGET
 		return
 	
@@ -224,13 +227,17 @@ func handle_moving_to_target_state(delta):
 	# Allow interruption with new clicks or shooting
 	if Input.is_action_just_pressed("shoot"):
 		target_position = null
+		target_indicator.visible = false
 		shoot()
 		return
 	elif Input.is_action_just_pressed("click"):
 		var clicked_pos = get_global_mouse_position()
 		target_position = get_walkable_position(clicked_pos)
+		target_indicator.visible = true
+		target_indicator.global_position = target_position
 	
 	if not target_position:
+		target_indicator.visible = false
 		current_state = State.IDLE
 		return
 	
@@ -262,6 +269,7 @@ func handle_moving_to_target_state(delta):
 	else:
 		velocity.x = 0
 		if is_on_floor():  # Only clear target and return to idle if we're on the ground
+			target_indicator.visible = false
 			target_position = null
 			current_state = State.IDLE
 

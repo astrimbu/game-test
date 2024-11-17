@@ -3,7 +3,7 @@ extends CharacterBody2D
 const KNOCKBACK_FORCE = 20
 const KNOCKBACK_DURATION = 0.3
 const MAX_HEALTH = 10
-const DAMAGE_PER_HIT = 1
+const DAMAGE_PER_HIT = 2
 const RESPAWN_DELAY = 3.0
 
 @onready var sprite = $Sprite2D
