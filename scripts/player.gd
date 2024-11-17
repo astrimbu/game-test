@@ -17,6 +17,7 @@ var last_direction = 1  # 1 for right, -1 for left
 var is_shooting = false
 var intermediate_target = null  # The next platform to jump to
 var platform_jump_position = null  # The position to jump from
+var target_enemy = null
 
 @onready var sprite = $Sprite2D
 @onready var animation_player = $AnimationPlayer
@@ -277,8 +278,7 @@ func handle_shooting_state(delta):
 	if is_on_floor():
 		velocity.x = 0
 	
-	# Check if we should keep shooting
-	if Input.is_action_pressed("shoot") and not is_shooting:
+	if (Input.is_action_pressed("shoot") or target_enemy):
 		shoot()  # Start another shot
 	elif not is_shooting:  # Only return to idle if we're not in the middle of a shot
 		current_state = State.IDLE
@@ -335,10 +335,30 @@ func has_platform_above_at_position() -> bool:
 		return true
 	return false
 
+func set_target_enemy(enemy):
+	target_enemy = enemy
+	target_indicator.visible = true
+	target_indicator.global_position = enemy.global_position - Vector2(0, enemy.sprite.texture.get_height() + 32)
+	
+	# Check if we need to turn around
+	var direction_to_enemy = sign(enemy.global_position.x - global_position.x)
+	if direction_to_enemy != last_direction:
+		last_direction = direction_to_enemy
+		sprite.flip_h = last_direction < 0
+	
+	current_state = State.SHOOTING
+
 func shoot():
-	if is_shooting:  # Don't allow shooting if we're already shooting
+	if is_shooting:
 		return
-		
+	
+	# Check if we need to turn around before shooting
+	if target_enemy:
+		var direction_to_enemy = sign(target_enemy.global_position.x - global_position.x)
+		if direction_to_enemy != last_direction:
+			last_direction = direction_to_enemy
+			sprite.flip_h = last_direction < 0
+	
 	current_state = State.SHOOTING
 	is_shooting = true
 	animation_player.play("shoot")
@@ -363,12 +383,17 @@ func shoot():
 		var enemy = result.collider
 		if enemy.has_method("hit"):
 			enemy.hit(shoot_position)
-	
+			if enemy.is_dead:
+				target_enemy = null
+				target_indicator.visible = false
+
 	# Wait for animation to complete
 	await animation_player.animation_finished
 	
 	is_shooting = false
-	if not Input.is_action_pressed("shoot"):
+	if target_enemy or Input.is_action_pressed("shoot"):
+		shoot()  # Shoot again
+	else:
 		current_state = State.IDLE
 		animation_player.play("idle")
 	queue_redraw()

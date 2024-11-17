@@ -94,3 +94,9 @@ func respawn():
 	# Play idle animation if it exists
 	if animation_player.has_animation("idle"):
 		animation_player.play("idle")
+
+func _input(event):
+	if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
+		if get_global_mouse_position().distance_to(global_position) < sprite.texture.get_width() / 2:
+			var player = get_tree().get_root().get_node("World/Player")
+			player.set_target_enemy(self)
