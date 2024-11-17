@@ -1,16 +1,22 @@
 extends CharacterBody2D
 
 const SPEED = 200.0
-const JUMP_VELOCITY = -300.0
-var target_position = null
-var gravity = ProjectSettings.get_setting("physics/2d/default_gravity")
-var ray_length = 100
+const JUMP_VELOCITY = -350.0
 const DROP_THROUGH_DURATION = 0.2
 const DROP_CHECK_DISTANCE = 400  # Maximum distance to check for platforms below
+const JUMP_CHECK_DISTANCE = 100  # Distance to check for platforms above
+const RAY_ANGLES = [0, 15, 30, 45, 60]  # Angles in degrees to check
+const RAY_LENGTH = 200  # Length of rays to cast
+const JUMP_POSITION_TOLERANCE = 20  # How close we need to be to jump
+
+var target_position = null
+var gravity = ProjectSettings.get_setting("physics/2d/default_gravity")
+var ray_length = 50
 var can_drop_through = true
 var last_direction = 1  # 1 for right, -1 for left
 var is_shooting = false
-const JUMP_CHECK_DISTANCE = 100  # Distance to check for platforms above
+var intermediate_target = null  # The next platform to jump to
+var platform_jump_position = null  # The position to jump from
 
 @onready var sprite = $Sprite2D
 @onready var animation_player = $AnimationPlayer
@@ -24,8 +30,8 @@ func get_walkable_position(clicked_pos: Vector2) -> Vector2:
 	
 	# First try a direct ray at the click position
 	var params = PhysicsRayQueryParameters2D.create(
-		clicked_pos + Vector2(0, -5),  # Start just slightly above click
-		clicked_pos + Vector2(0, 10),   # End just slightly below click
+		clicked_pos + Vector2(0, -20),  # Start just slightly above click
+		clicked_pos + Vector2(0, 20),   # End just slightly below click
 		1  # Ground layer
 	)
 	
@@ -70,6 +76,10 @@ func _physics_process(delta):
 	# Apply movement last
 	move_and_slide()
 
+	# Handle shooting
+	if Input.is_action_just_pressed("shoot"):
+		shoot()
+
 func handle_idle_state(delta):
 	if Input.is_action_just_pressed("click"):
 		var clicked_pos = get_global_mouse_position()
@@ -88,7 +98,7 @@ func handle_idle_state(delta):
 	sprite.flip_h = last_direction < 0
 	
 	if Input.is_action_just_pressed("shoot"):
-		handle_shoot()
+		shoot()
 	elif Input.is_action_pressed("ui_accept") and is_on_floor() and has_platform_above():
 		current_state = State.JUMPING
 	
@@ -125,7 +135,7 @@ func handle_walking_state(delta):
 	
 	if Input.is_action_just_pressed("shoot"):
 		velocity.x = 0
-		handle_shoot()
+		shoot()
 		return
 	elif Input.is_action_pressed("ui_accept") and has_platform_above():
 		current_state = State.JUMPING
@@ -151,56 +161,120 @@ func will_fall_off_edge(direction: float) -> bool:
 
 func handle_jumping_state(delta):
 	velocity.y = JUMP_VELOCITY
-	velocity.x = 0  # Remove horizontal momentum for more controlled vertical jumps
+	velocity.x = 0  # Keep vertical-only jump
 	
 	animation_player.play("jump")
-	current_state = State.IDLE  # Allow for other inputs while in air
+	if target_position:
+		current_state = State.MOVING_TO_TARGET  # Return to moving if we have a target
+	else:
+		current_state = State.IDLE  # Only go to idle if no target
+
+func can_reach_with_jump(target_y: float) -> bool:
+	# Calculate maximum height reached with jump
+	# Using physics formula: h = v0*t + (1/2)*a*t^2
+	# At peak height, v = 0, so: 0 = v0 + a*t
+	# Therefore t = -v0/a
+	var time_to_peak = -JUMP_VELOCITY / gravity
+	var max_jump_height = JUMP_VELOCITY * time_to_peak + 0.5 * gravity * time_to_peak * time_to_peak
+	
+	# Check if target is within reachable height
+	return position.y + max_jump_height <= target_y
+
+func find_next_platform() -> Dictionary:
+	var space_state = get_world_2d().direct_space_state
+	var best_platform = null
+	var best_distance = INF
+	var best_jump_position = null
+	
+	# Convert angles to radians and check both left and right
+	for angle_deg in RAY_ANGLES:
+		for direction in [-1, 1]:
+			var angle = deg_to_rad(angle_deg) * direction
+			var ray_end = Vector2(
+				cos(angle) * RAY_LENGTH,
+				-sin(angle) * RAY_LENGTH
+			)
+			
+			var params = PhysicsRayQueryParameters2D.create(
+				global_position,
+				global_position + ray_end,
+				1  # Ground layer
+			)
+			
+			var result = space_state.intersect_ray(params)
+			if result and result.position.y < position.y - 10:  # Platform is above us
+				if can_reach_with_jump(result.position.y):
+					# Calculate jump position (slightly before the edge if needed)
+					var jump_x = result.position.x - (direction * 10)
+					var jump_position = Vector2(jump_x, position.y)
+					
+					# Check if this platform is closer to our target
+					var dist_to_target = result.position.distance_to(target_position)
+					if dist_to_target < best_distance:
+						best_distance = dist_to_target
+						best_platform = result.position
+						best_jump_position = jump_position
+	
+	return {
+		"platform": best_platform,
+		"jump_position": best_jump_position
+	}
 
 func handle_moving_to_target_state(delta):
 	# Allow interruption with new clicks or shooting
 	if Input.is_action_just_pressed("shoot"):
-		target_position = null  # Clear the target
-		handle_shoot()
+		target_position = null
+		shoot()
 		return
 	elif Input.is_action_just_pressed("click"):
-		print("New click in moving state")
 		var clicked_pos = get_global_mouse_position()
 		target_position = get_walkable_position(clicked_pos)
-		print("New target position: ", target_position)
 	
-	if target_position:
-		print("Moving to target: ", target_position, " current pos: ", position)
-		var direction_to_target = position.direction_to(target_position)
-		var distance_to_target = position.distance_to(target_position)
-		
-		if distance_to_target > 10:
-			if direction_to_target.x != 0:  # Only update when actually moving
-				last_direction = sign(direction_to_target.x)
-				sprite.flip_h = last_direction < 0
-				
-				# The issue is here - we're immediately canceling movement and clearing target
-				# when there's an edge, instead of letting the player stop at the edge
-				velocity.x = direction_to_target.x * SPEED
-				if will_fall_off_edge(sign(direction_to_target.x)):
-					print("Edge detected, stopping")
-					velocity.x = 0
-				animation_player.play("walk")
-		else:
+	if not target_position:
+		current_state = State.IDLE
+		return
+	
+	# Check if we need to jump to reach the target
+	if target_position.y < position.y - 10 and is_on_floor():  # Target is above us
+		if has_platform_above_at_position():  # Only jump if there's actually a platform above
+			current_state = State.JUMPING
+			return
+	
+	# Check if we need to drop through to reach the target
+	if target_position.y > position.y + 10 and is_on_floor():  # Target is below us
+		if has_platform_below() and can_drop_through:
+			drop_through_platform()
+			# Don't return here, let the character keep moving horizontally
+	
+	# Move towards the target at full speed
+	var direction_to_target = sign(target_position.x - position.x)
+	var at_target_x = abs(position.x - target_position.x) <= 10
+	var at_target_y = abs(position.y - target_position.y) <= 10
+	
+	if not (at_target_x and at_target_y):
+		if not at_target_x:  # Only move horizontally if we're not at the target x
+			last_direction = direction_to_target
+			sprite.flip_h = last_direction < 0
+			velocity.x = direction_to_target * SPEED
+			if will_fall_off_edge(direction_to_target):
+				velocity.x = 0
+			animation_player.play("walk")
+	else:
+		velocity.x = 0
+		if is_on_floor():  # Only clear target and return to idle if we're on the ground
 			target_position = null
 			current_state = State.IDLE
 
 func handle_shooting_state(delta):
 	if is_on_floor():
 		velocity.x = 0
-	animation_player.play("shoot")
-	# Wait for animation to finish
-	await animation_player.animation_finished
 	
 	# Check if we should keep shooting
-	if Input.is_action_pressed("shoot"):
-		current_state = State.SHOOTING  # Start another shot
-	else:
+	if Input.is_action_pressed("shoot") and not is_shooting:
+		shoot()  # Start another shot
+	elif not is_shooting:  # Only return to idle if we're not in the middle of a shot
 		current_state = State.IDLE
+		animation_player.play("idle")
 
 func drop_through_platform():
 	# Temporarily disable collision with one-way platforms
@@ -240,14 +314,79 @@ func has_platform_above() -> bool:
 		return true
 	return false
 
-func handle_shoot():
+func has_platform_above_at_position() -> bool:
+	var space_state = get_world_2d().direct_space_state
+	var params = PhysicsRayQueryParameters2D.create(
+		global_position,  # Start from current position
+		global_position + Vector2(0, -JUMP_CHECK_DISTANCE),  # Check upward
+		1  # Ground layer
+	)
+	
+	var results = space_state.intersect_ray(params)
+	if results and results.position.y < global_position.y - 10:  # Add small offset
+		return true
+	return false
+
+func shoot():
+	if is_shooting:  # Don't allow shooting if we're already shooting
+		return
+		
 	current_state = State.SHOOTING
+	is_shooting = true
+	animation_player.play("shoot")
+	queue_redraw()
+	
+	# Add delay to match animation
+	await get_tree().create_timer(0.2).timeout
+	
+	# Calculate shoot position offset from center (30 pixels up)
+	var shoot_position = global_position + Vector2(0, -30)
+	
+	# Create a raycast in the direction the player is facing
+	var space_state = get_world_2d().direct_space_state
+	var query = PhysicsRayQueryParameters2D.create(
+		shoot_position,
+		shoot_position + Vector2(last_direction * 1000, 0)  # 1000 pixels range
+	)
+	query.collision_mask = 0b100  # Layer 3 (Enemy)
+	var result = space_state.intersect_ray(query)
+	
+	if result:
+		var enemy = result.collider
+		if enemy.has_method("hit"):
+			enemy.hit(shoot_position)
+	
+	# Wait for animation to complete
+	await animation_player.animation_finished
+	
+	is_shooting = false
+	if not Input.is_action_pressed("shoot"):
+		current_state = State.IDLE
+		animation_player.play("idle")
+	queue_redraw()
 
 func _draw():
 	if OS.is_debug_build():
-		draw_line(Vector2.ZERO, Vector2(0, DROP_CHECK_DISTANCE), Color.RED)
-		var check_pos = Vector2(10, -5)  # Right check, synced with raycast
-		var check_down = Vector2(0, 10)  # Down check, synced with raycast
-		draw_line(check_pos, check_pos + check_down, Color.GREEN)
-		check_pos = Vector2(-10, -5)  # Left check
-		draw_line(check_pos, check_pos + check_down, Color.GREEN)
+		# Add visualization of ray checks
+		for angle_deg in RAY_ANGLES:
+			for direction in [-1, 1]:
+				var angle = deg_to_rad(angle_deg) * direction
+				var ray_end = Vector2(
+					cos(angle) * RAY_LENGTH,
+					-sin(angle) * RAY_LENGTH
+				)
+				draw_line(Vector2.ZERO, ray_end, Color(1, 1, 0, 0.2))
+		
+		# Draw current targets if they exist
+		if target_position:
+			draw_circle(target_position - position, 5, Color.RED)
+		if intermediate_target:
+			draw_circle(intermediate_target - position, 5, Color.GREEN)
+		if platform_jump_position:
+			draw_circle(platform_jump_position - position, 5, Color.BLUE)
+		
+		# Add shooting raycast visualization with adjusted height
+		if is_shooting:
+			var shoot_start = Vector2(0, -30)
+			var shoot_end = shoot_start + Vector2(last_direction * 1000, 0)
+			draw_line(shoot_start, shoot_end, Color(1, 0, 0, 0.8), 2.0)
