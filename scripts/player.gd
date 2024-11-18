@@ -58,6 +58,10 @@ func get_walkable_position(clicked_pos: Vector2) -> Vector2:
 	return position
 
 func _physics_process(delta):
+	# Update target indicator position if we have a target enemy
+	if target_enemy and target_indicator.visible:
+		target_indicator.global_position = target_enemy.global_position - Vector2(0, target_enemy.sprite.texture.get_height() * 2)
+
 	# Apply gravity first
 	if not is_on_floor():
 		velocity.y += gravity * delta
@@ -84,11 +88,7 @@ func _physics_process(delta):
 
 func handle_idle_state(delta):
 	if Input.is_action_just_pressed("click"):
-		var clicked_pos = get_global_mouse_position()
-		target_position = get_walkable_position(clicked_pos)
-		target_indicator.visible = true
-		target_indicator.global_position = target_position
-		current_state = State.MOVING_TO_TARGET
+		handle_click(get_global_mouse_position())
 		return
 	
 	# Only process horizontal movement if on floor
@@ -119,11 +119,7 @@ func handle_walking_state(delta):
 	
 	# Check for click movement first
 	if Input.is_action_just_pressed("click"):
-		print("Click detected in walking state")
-		var clicked_pos = get_global_mouse_position()
-		target_position = get_walkable_position(clicked_pos)
-		print("Target position set to: ", target_position)
-		current_state = State.MOVING_TO_TARGET
+		handle_click(get_global_mouse_position())
 		return
 	
 	var direction = Input.get_axis("ui_left", "ui_right")
@@ -232,10 +228,8 @@ func handle_moving_to_target_state(delta):
 		shoot()
 		return
 	elif Input.is_action_just_pressed("click"):
-		var clicked_pos = get_global_mouse_position()
-		target_position = get_walkable_position(clicked_pos)
-		target_indicator.visible = true
-		target_indicator.global_position = target_position
+		handle_click(get_global_mouse_position())
+		return
 	
 	if not target_position:
 		target_indicator.visible = false
@@ -254,7 +248,7 @@ func handle_moving_to_target_state(delta):
 			drop_through_platform()
 			# Don't return here, let the character keep moving horizontally
 	
-	# Move towards the target at full speed
+	# Move towards the target
 	var direction_to_target = sign(target_position.x - position.x)
 	var at_target_x = abs(position.x - target_position.x) <= 10
 	var at_target_y = abs(position.y - target_position.y) <= 10
@@ -267,12 +261,27 @@ func handle_moving_to_target_state(delta):
 			if will_fall_off_edge(direction_to_target):
 				velocity.x = 0
 			animation_player.play("walk")
+			
+			# Check if we can start shooting while moving
+			if target_enemy and not target_enemy.is_dead:
+				var height_difference = abs(target_enemy.global_position.y - global_position.y)
+				if height_difference <= 10 and is_on_floor():
+					# We're on the same level as the enemy, start shooting
+					face_target(target_enemy.global_position)
+					current_state = State.SHOOTING
+					return
+		else:
+			velocity.x = 0
 	else:
 		velocity.x = 0
 		if is_on_floor():  # Only clear target and return to idle if we're on the ground
-			target_indicator.visible = false
-			target_position = null
-			current_state = State.IDLE
+			if target_enemy and not target_enemy.is_dead:
+				face_target(target_enemy.global_position)
+				current_state = State.SHOOTING
+			else:
+				target_indicator.visible = false
+				target_position = null
+				current_state = State.IDLE
 
 func handle_shooting_state(delta):
 	if is_on_floor():
@@ -337,16 +346,27 @@ func has_platform_above_at_position() -> bool:
 
 func set_target_enemy(enemy):
 	target_enemy = enemy
+	if not enemy:
+		target_indicator.visible = false
+		return
+	
+	# Update target indicator
 	target_indicator.visible = true
-	target_indicator.global_position = enemy.global_position - Vector2(0, enemy.sprite.texture.get_height() + 32)
+	target_indicator.global_position = enemy.global_position - Vector2(0, enemy.sprite.texture.get_height() * 2)
 	
-	# Check if we need to turn around
-	var direction_to_enemy = sign(enemy.global_position.x - global_position.x)
-	if direction_to_enemy != last_direction:
-		last_direction = direction_to_enemy
+	# Get enemy platform position
+	var platform_position = get_walkable_position(enemy.global_position)
+	
+	# Always move to enemy platform first
+	target_position = platform_position
+	current_state = State.MOVING_TO_TARGET
+
+# Helper function to face a target
+func face_target(target_pos: Vector2):
+	var direction = sign(target_pos.x - global_position.x)
+	if direction != last_direction:
+		last_direction = direction
 		sprite.flip_h = last_direction < 0
-	
-	current_state = State.SHOOTING
 
 func shoot():
 	if is_shooting:
@@ -398,25 +418,56 @@ func shoot():
 		animation_player.play("idle")
 	queue_redraw()
 
+func handle_click(clicked_pos: Vector2):
+	# If we're currently shooting, make sure to clean up the shooting state
+	if is_shooting:
+		is_shooting = false
+		animation_player.stop()  # Stop the shooting animation
+	
+	# First check if we clicked directly on an enemy
+	var space_state = get_world_2d().direct_space_state
+	var params = PhysicsPointQueryParameters2D.new()
+	params.position = clicked_pos
+	params.collision_mask = 0b100  # Layer 3 (Enemy)
+	params.collide_with_bodies = true
+	
+	var results = space_state.intersect_point(params)
+	
+	# Clear previous target and indicator first
+	target_enemy = null
+	target_indicator.visible = false
+	
+	if not results.is_empty():
+		# We clicked directly on an enemy
+		var enemy = results[0].collider
+		if enemy.has_method("hit"):
+			# Set enemy as target and update indicator
+			target_enemy = enemy
+			target_indicator.visible = true
+			target_indicator.global_position = enemy.global_position - Vector2(0, enemy.sprite.texture.get_height() * 2)
+			
+			# Move to enemy platform
+			target_position = get_walkable_position(enemy.global_position)
+			current_state = State.MOVING_TO_TARGET
+			return
+	
+	# If no enemy was clicked, handle as movement
+	target_position = get_walkable_position(clicked_pos)
+	target_indicator.visible = true
+	target_indicator.global_position = target_position
+	current_state = State.MOVING_TO_TARGET
+
 func _draw():
 	if OS.is_debug_build():
-		# Add visualization of ray checks
-		for angle_deg in RAY_ANGLES:
-			for direction in [-1, 1]:
-				var angle = deg_to_rad(angle_deg) * direction
-				var ray_end = Vector2(
-					cos(angle) * RAY_LENGTH,
-					-sin(angle) * RAY_LENGTH
-				)
-				draw_line(Vector2.ZERO, ray_end, Color(1, 1, 0, 0.2))
-		
-		# Draw current targets if they exist
-		if target_position:
-			draw_circle(target_position - position, 5, Color.RED)
-		if intermediate_target:
-			draw_circle(intermediate_target - position, 5, Color.GREEN)
-		if platform_jump_position:
-			draw_circle(platform_jump_position - position, 5, Color.BLUE)
+		# Edge detection raycasts
+		#for angle_deg in RAY_ANGLES:
+			#for direction in [-1, 1]:
+				#var angle = deg_to_rad(angle_deg) * direction
+				#var ray_end = Vector2(
+					#cos(angle) * RAY_LENGTH,
+					#-sin(angle) * RAY_LENGTH
+				#)
+				#draw_line(Vector2.ZERO, ray_end, Color(1, 1, 0, 0.2))
 		
 		# Add shooting raycast visualization with adjusted height
 		if is_shooting:
