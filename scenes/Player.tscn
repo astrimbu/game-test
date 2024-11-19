@@ -1,12 +1,9 @@
 [gd_scene load_steps=11 format=3 uid="uid://coeakbrtx0usb"]
 
-[ext_resource type="Script" path="res://scripts/player.gd" id="1_w2q4p"]
+[ext_resource type="Script" path="res://scripts/Player.gd" id="1_w2q4p"]
 [ext_resource type="Texture2D" uid="uid://bbocld0ulddwv" path="res://assets/Walking stick figure.png" id="2_abyqb"]
 [ext_resource type="Texture2D" uid="uid://e8knndvd0jb2" path="res://assets/Idle stick figure.png" id="3_hswh4"]
 [ext_resource type="Texture2D" uid="uid://defgy617v1oej" path="res://assets/Shoot stick figure.png" id="4_kexne"]
-
-[sub_resource type="RectangleShape2D" id="RectangleShape2D_fy7lk"]
-size = Vector2(16, 72)
 
 [sub_resource type="Animation" id="Animation_f4e54"]
 length = 0.001
@@ -228,6 +225,9 @@ _data = {
 "walk": SubResource("Animation_4ow2l")
 }
 
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_fy7lk"]
+size = Vector2(16, 72)
+
 [node name="Player" type="CharacterBody2D"]
 collision_layer = 2
 script = ExtResource("1_w2q4p")
@@ -238,12 +238,12 @@ scale = Vector2(3, 3)
 texture = ExtResource("3_hswh4")
 hframes = 5
 
-[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
-position = Vector2(0, -37)
-shape = SubResource("RectangleShape2D_fy7lk")
-
 [node name="AnimationPlayer" type="AnimationPlayer" parent="."]
 libraries = {
 "": SubResource("AnimationLibrary_f1uah")
 }
 autoplay = "idle"
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+position = Vector2(0, -37)
+shape = SubResource("RectangleShape2D_fy7lk")

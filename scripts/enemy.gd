@@ -9,6 +9,7 @@ const RESPAWN_DELAY = 3.0
 @onready var sprite = $Sprite2D
 @onready var animation_player = $AnimationPlayer
 @onready var health_bar = $HealthBar
+@onready var player = $"../Player"
 @onready var initial_position = global_position
 
 var gravity = ProjectSettings.get_setting("physics/2d/default_gravity")
@@ -98,5 +99,4 @@ func respawn():
 func _input(event):
 	if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
 		if get_global_mouse_position().distance_to(global_position) < sprite.texture.get_width() / 2:
-			var player = get_tree().get_root().get_node("World/Player")
 			player.set_target_enemy(self)

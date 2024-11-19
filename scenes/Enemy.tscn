@@ -1,6 +1,6 @@
 [gd_scene load_steps=7 format=3 uid="uid://cu4jtjaesjpcr"]
 
-[ext_resource type="Script" path="res://scripts/enemy.gd" id="1_6fodb"]
+[ext_resource type="Script" path="res://scripts/Enemy.gd" id="1_6fodb"]
 [ext_resource type="Texture2D" uid="uid://dj5rc02vhl70x" path="res://assets/Squiddy idle.png" id="1_10ilr"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_fclw4"]
@@ -145,3 +145,5 @@ offset_bottom = -82.0
 max_value = 10.0
 step = 1.0
 show_percentage = false
+
+[node name="Sprite2D2" type="Sprite2D" parent="."]

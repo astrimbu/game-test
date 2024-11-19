@@ -1,0 +1,33 @@
+[gd_scene load_steps=5 format=3 uid="uid://dg0p6103tc2vj"]
+
+[ext_resource type="Script" path="res://scripts/NPC.gd" id="1_45keb"]
+[ext_resource type="Texture2D" uid="uid://dj5rc02vhl70x" path="res://assets/Squiddy idle.png" id="2_7fqxm"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_bb48q"]
+size = Vector2(64, 88)
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_o7qlf"]
+size = Vector2(64, 88)
+
+[node name="Npc" type="CharacterBody2D"]
+collision_layer = 8
+script = ExtResource("1_45keb")
+
+[node name="Sprite2D" type="Sprite2D" parent="."]
+scale = Vector2(3, 3)
+texture = ExtResource("2_7fqxm")
+offset = Vector2(0, -16)
+hframes = 7
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+position = Vector2(0, -44)
+shape = SubResource("RectangleShape2D_bb48q")
+
+[node name="AnimationPlayer" type="AnimationPlayer" parent="."]
+
+[node name="Area2D" type="Area2D" parent="."]
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Area2D"]
+visible = false
+position = Vector2(0, -44)
+shape = SubResource("RectangleShape2D_o7qlf")
