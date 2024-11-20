@@ -19,6 +19,7 @@ var is_shooting = false
 var intermediate_target = null  # The next platform to jump to
 var platform_jump_position = null  # The position to jump from
 var target_enemy = null
+var target_npc = null
 
 @onready var sprite = $Sprite2D
 @onready var animation_player = $AnimationPlayer
@@ -30,7 +31,6 @@ var current_state = State.IDLE
 
 func _ready():
 	add_to_group("player")
-	print(OS.get_executable_path())
 
 func get_walkable_position(clicked_pos: Vector2) -> Vector2:
 	var space_state = get_world_2d().direct_space_state
@@ -92,16 +92,10 @@ func _physics_process(delta):
 		shoot()
 
 func handle_click(clicked_pos: Vector2):
-	print("handle_click")
-	# Don't interrupt if we're in the middle of a shooting animation
+	# Don't interrupt if we're in the middle of a manual shooting animation
 	if is_shooting and not target_enemy:
 		return
 	
-	# Force stop any shooting state
-	is_shooting = false
-	animation_player.stop()
-	target_enemy = null  # Clear the target enemy to break the shooting loop
-
 	# First check if we clicked on something interactive
 	var space_state = get_world_2d().direct_space_state
 	var params = PhysicsPointQueryParameters2D.new()
@@ -119,23 +113,32 @@ func handle_click(clicked_pos: Vector2):
 		var clicked_object = results[0].collider
 		
 		if clicked_object is CharacterBody2D:  # Base class for both Enemy and NPC
-			var interaction_position
-			
-			if clicked_object.is_in_group("npc"):
-				# Calculate position to stop at when approaching NPC
-				var direction = (clicked_object.global_position - global_position).normalized()
-				interaction_position = clicked_object.global_position - (direction * INTERACTION_DISTANCE)
+			if clicked_object.get_collision_layer_value(4):  # NPC check
+				target_npc = clicked_object
+				
+				# Check if we're already on the same height level (with small tolerance)
+				var height_difference = abs(clicked_object.global_position.y - global_position.y)
+				var direction = sign(clicked_object.global_position.x - global_position.x)
+
+				if height_difference <= 10:
+					# On same level - calculate position that maintains interaction distance
+					target_position = clicked_object.global_position - Vector2(direction * INTERACTION_DISTANCE, 0)
+				else:
+					# Different height - walk to NPC's position
+					target_position = get_walkable_position(clicked_object.global_position - Vector2(direction * 50, 0))
 				
 				# Update target indicator above NPC's head
 				target_indicator.visible = true
 				target_indicator.global_position = clicked_object.global_position - Vector2(0, clicked_object.sprite.texture.get_height() * 2)
-				
-				# Set movement target
-				target_position = get_walkable_position(interaction_position)
+
 				current_state = State.MOVING_TO_TARGET
 				return
-			elif clicked_object.has_method("hit"):  # Enemy check
-				# Existing enemy targeting code
+			elif clicked_object.get_collision_layer_value(3):  # Enemy check
+				# Prevent spam clicking
+				if is_shooting:
+					current_state = State.IDLE
+					return
+
 				target_enemy = clicked_object
 				target_indicator.visible = true
 				target_indicator.global_position = clicked_object.global_position - Vector2(0, clicked_object.sprite.texture.get_height() * 2)
@@ -163,7 +166,6 @@ func handle_idle_state(delta):
 	
 	if not is_shooting:
 		animation_player.play("idle")
-	sprite.flip_h = last_direction < 0
 	
 	if Input.is_action_just_pressed("shoot"):
 		current_state = State.SHOOTING
@@ -188,12 +190,14 @@ func handle_walking_state(delta):
 		return
 	
 	var direction = Input.get_axis("ui_left", "ui_right")
+	
 	if direction != 0:
 		if will_fall_off_edge(direction):
 			velocity.x = 0
 		else:
-			last_direction = sign(direction)
-			sprite.flip_h = last_direction < 0
+			if direction != last_direction:  # Check for mismatch
+				last_direction = direction
+				scale.x = -1
 			velocity.x = direction * SPEED
 	else:
 		velocity.x = 0
@@ -257,8 +261,9 @@ func handle_moving_to_target_state(delta):
 	
 	if not (at_target_x and at_target_y):
 		if not at_target_x:  # Only move horizontally if we're not at the target x
-			last_direction = direction_to_target
-			sprite.flip_h = last_direction < 0
+			if direction_to_target != last_direction:  # Check for mismatch
+				last_direction = direction_to_target
+				scale.x = -1
 			velocity.x = direction_to_target * SPEED
 			if will_fall_off_edge(direction_to_target):
 				velocity.x = 0
@@ -268,8 +273,6 @@ func handle_moving_to_target_state(delta):
 			if target_enemy and not target_enemy.is_dead:
 				var height_difference = abs(target_enemy.global_position.y - global_position.y)
 				if height_difference <= 10 and is_on_floor():
-					# We're on the same level as the enemy, start shooting
-					face_target(target_enemy.global_position)
 					current_state = State.SHOOTING
 					return
 		else:
@@ -278,15 +281,19 @@ func handle_moving_to_target_state(delta):
 		velocity.x = 0
 		if is_on_floor():  # Only clear target and return to idle if we're on the ground
 			if target_enemy and not target_enemy.is_dead:
-				face_target(target_enemy.global_position)
 				current_state = State.SHOOTING
+			elif target_npc and target_npc.can_interact:
+				target_npc.start_interaction()
+				target_npc = null
+				target_indicator.visible = false
+				target_position = null
+				current_state = State.IDLE
 			else:
 				target_indicator.visible = false
 				target_position = null
 				current_state = State.IDLE
 
 func handle_shooting_state(delta):
-	print("handle_shooting_state")
 	# Check for click interruption first
 	if Input.is_action_just_pressed("click"):
 		handle_click(get_global_mouse_position())
@@ -314,22 +321,13 @@ func handle_manual_shooting():
 		animation_player.play("idle")
 
 func shoot(is_auto: bool = false):
-	print("shoot")
 	# Check for click interruption first
 	if Input.is_action_just_pressed("click"):
 		handle_click(get_global_mouse_position())
 		return
 	
 	if is_shooting:
-		print("shoot is_shooting 436")
 		return
-	
-	# Check if we need to turn around before shooting
-	if target_enemy:
-		var direction_to_enemy = sign(target_enemy.global_position.x - global_position.x)
-		if direction_to_enemy != last_direction:
-			last_direction = direction_to_enemy
-			sprite.flip_h = last_direction < 0
 	
 	current_state = State.SHOOTING
 	is_shooting = true
@@ -347,7 +345,7 @@ func shoot(is_auto: bool = false):
 		return
 	
 	# Calculate shoot position offset from center (30 pixels up)
-	var shoot_position = global_position + Vector2(0, -30)
+	var shoot_position = global_position + Vector2(0, -60)
 	
 	# Create a raycast in the direction the player is facing
 	var space_state = get_world_2d().direct_space_state
@@ -489,7 +487,6 @@ func has_platform_above() -> bool:
 	return false
 
 func set_target_enemy(enemy):
-	print("set_target_enemy")
 	target_enemy = enemy
 	if not enemy:
 		target_indicator.visible = false
@@ -506,12 +503,6 @@ func set_target_enemy(enemy):
 	target_position = platform_position
 	current_state = State.MOVING_TO_TARGET
 
-func face_target(target_pos: Vector2):
-	var direction = sign(target_pos.x - global_position.x)
-	if direction != last_direction:
-		last_direction = direction
-		sprite.flip_h = last_direction < 0
-
 func _draw():
 	if OS.is_debug_build():
 		# Edge detection raycasts
@@ -526,6 +517,6 @@ func _draw():
 		
 		# Add shooting raycast visualization with adjusted height
 		if is_shooting:
-			var shoot_start = Vector2(0, -30)
-			var shoot_end = shoot_start + Vector2(last_direction * 1000, 0)
-			draw_line(shoot_start, shoot_end, Color(1, 0, 0, 0.8), 2.0)
+			var shoot_start = Vector2(35, -55)
+			var shoot_end = shoot_start + Vector2(1000, 0)
+			draw_line(shoot_start, shoot_end, Color(1, 0, 0, .8), 2.0)

@@ -1,8 +1,9 @@
-[gd_scene load_steps=11 format=3 uid="uid://coeakbrtx0usb"]
+[gd_scene load_steps=12 format=3 uid="uid://coeakbrtx0usb"]
 
 [ext_resource type="Script" path="res://scripts/Player.gd" id="1_w2q4p"]
 [ext_resource type="Texture2D" uid="uid://bbocld0ulddwv" path="res://assets/Walking stick figure.png" id="2_abyqb"]
 [ext_resource type="Texture2D" uid="uid://e8knndvd0jb2" path="res://assets/Idle stick figure.png" id="3_hswh4"]
+[ext_resource type="Texture2D" uid="uid://y48kchddtn0u" path="res://assets/hats/Hat1.png" id="3_ykxss"]
 [ext_resource type="Texture2D" uid="uid://defgy617v1oej" path="res://assets/Shoot stick figure.png" id="4_kexne"]
 
 [sub_resource type="Animation" id="Animation_f4e54"]
@@ -54,6 +55,18 @@ tracks/3/keys = {
 "transitions": PackedFloat32Array(1),
 "update": 1,
 "values": [ExtResource("3_hswh4")]
+}
+tracks/4/type = "value"
+tracks/4/imported = false
+tracks/4/enabled = true
+tracks/4/path = NodePath("HatSprite:position")
+tracks/4/interp = 1
+tracks/4/loop_wrap = true
+tracks/4/keys = {
+"times": PackedFloat32Array(0),
+"transitions": PackedFloat32Array(1),
+"update": 0,
+"values": [Vector2(0, -67)]
 }
 
 [sub_resource type="Animation" id="Animation_urwp1"]
@@ -109,6 +122,18 @@ tracks/3/keys = {
 "update": 1,
 "values": [ExtResource("3_hswh4")]
 }
+tracks/4/type = "value"
+tracks/4/imported = false
+tracks/4/enabled = true
+tracks/4/path = NodePath("HatSprite:position")
+tracks/4/interp = 1
+tracks/4/loop_wrap = true
+tracks/4/keys = {
+"times": PackedFloat32Array(0, 0.2, 0.6),
+"transitions": PackedFloat32Array(1, 1, 1),
+"update": 1,
+"values": [Vector2(0, -67), Vector2(0, -70), Vector2(0, -67)]
+}
 
 [sub_resource type="Animation" id="Animation_ycpfw"]
 resource_name = "shoot"
@@ -161,6 +186,18 @@ tracks/3/keys = {
 "transitions": PackedFloat32Array(1, 1, 1, 1, 1, 1),
 "update": 1,
 "values": [0, 1, 2, 3, 4, 5]
+}
+tracks/4/type = "value"
+tracks/4/imported = false
+tracks/4/enabled = true
+tracks/4/path = NodePath("HatSprite:position")
+tracks/4/interp = 1
+tracks/4/loop_wrap = true
+tracks/4/keys = {
+"times": PackedFloat32Array(0, 0.3, 0.4),
+"transitions": PackedFloat32Array(1, 1, 1),
+"update": 1,
+"values": [Vector2(0, -67), Vector2(-3, -67), Vector2(0, -67)]
 }
 
 [sub_resource type="Animation" id="Animation_4ow2l"]
@@ -216,6 +253,18 @@ tracks/3/keys = {
 "update": 1,
 "values": [0, 1, 2, 3, 4, 5, 6, 7]
 }
+tracks/4/type = "value"
+tracks/4/imported = false
+tracks/4/enabled = true
+tracks/4/path = NodePath("HatSprite:position")
+tracks/4/interp = 1
+tracks/4/loop_wrap = true
+tracks/4/keys = {
+"times": PackedFloat32Array(0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7),
+"transitions": PackedFloat32Array(1, 1, 1, 1, 1, 1, 1, 1),
+"update": 1,
+"values": [Vector2(6, -67), Vector2(6, -64), Vector2(6, -67), Vector2(6, -70), Vector2(6, -67), Vector2(6, -64), Vector2(6, -67), Vector2(6, -70)]
+}
 
 [sub_resource type="AnimationLibrary" id="AnimationLibrary_f1uah"]
 _data = {
@@ -226,7 +275,7 @@ _data = {
 }
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_fy7lk"]
-size = Vector2(16, 72)
+size = Vector2(18, 75)
 
 [node name="Player" type="CharacterBody2D"]
 collision_layer = 2
@@ -238,6 +287,11 @@ scale = Vector2(3, 3)
 texture = ExtResource("3_hswh4")
 hframes = 5
 
+[node name="HatSprite" type="Sprite2D" parent="."]
+position = Vector2(0, -67)
+scale = Vector2(3, 3)
+texture = ExtResource("3_ykxss")
+
 [node name="AnimationPlayer" type="AnimationPlayer" parent="."]
 libraries = {
 "": SubResource("AnimationLibrary_f1uah")
@@ -245,5 +299,6 @@ libraries = {
 autoplay = "idle"
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="."]
-position = Vector2(0, -37)
+visible = false
+position = Vector2(0, -38.5)
 shape = SubResource("RectangleShape2D_fy7lk")

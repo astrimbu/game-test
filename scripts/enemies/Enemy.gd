@@ -1,14 +1,23 @@
 extends CharacterBody2D
+class_name Enemy
 
 const KNOCKBACK_FORCE = 20
 const KNOCKBACK_DURATION = 0.3
-const MAX_HEALTH = 10
-const DAMAGE_PER_HIT = 2
 const RESPAWN_DELAY = 3.0
 
-@onready var sprite = $Sprite2D
-@onready var animation_player = $AnimationPlayer
-@onready var health_bar = $HealthBar
+# Make these configurable per enemy type
+@export var max_health := 10
+@export var damage_per_hit := 2
+
+# Required node paths
+@export var sprite_path: NodePath
+@export var animation_player_path: NodePath
+@export var health_bar_path: NodePath
+
+# Onready vars using the paths
+@onready var sprite = get_node(sprite_path)
+@onready var animation_player = get_node(animation_player_path)
+@onready var health_bar = get_node(health_bar_path)
 @onready var player = $"../Player"
 @onready var initial_position = global_position
 
@@ -16,15 +25,26 @@ var gravity = ProjectSettings.get_setting("physics/2d/default_gravity")
 var is_being_hit = false
 var knockback_direction = Vector2.ZERO
 var knockback_timer = 0.0
-var current_health = MAX_HEALTH
+var current_health
 var is_dead = false
 
 func _ready():
+	# Validate required nodes
+	assert(sprite != null, "Sprite node not found at specified path")
+	assert(animation_player != null, "AnimationPlayer node not found at specified path")
+	assert(health_bar != null, "HealthBar node not found at specified path")
+	
+	current_health = max_health
 	setup_health_bar()
+	_init_enemy()
+
+# Virtual method for child classes to override
+func _init_enemy():
+	pass
 
 func setup_health_bar():
 	# Update health bar to match current health
-	health_bar.max_value = MAX_HEALTH
+	health_bar.max_value = max_health
 	health_bar.value = current_health
 	health_bar.show()
 
@@ -56,7 +76,7 @@ func hit(attack_position: Vector2):
 	knockback_direction = (global_position - attack_position).normalized()
 	
 	# Apply damage
-	current_health -= DAMAGE_PER_HIT
+	current_health -= damage_per_hit
 	health_bar.value = current_health
 	
 	# Check for death
@@ -83,7 +103,7 @@ func die():
 func respawn():
 	# Reset position and state
 	global_position = initial_position
-	current_health = MAX_HEALTH
+	current_health = max_health
 	is_dead = false
 	is_being_hit = false
 	health_bar.value = current_health

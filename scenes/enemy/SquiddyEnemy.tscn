@@ -1,0 +1,37 @@
+[gd_scene load_steps=4 format=3 uid="uid://is116dqix5mu"]
+
+[ext_resource type="Script" path="res://scripts/enemies/SquiddyEnemy.gd" id="2_ehycd"]
+[ext_resource type="Texture2D" uid="uid://dj5rc02vhl70x" path="res://assets/Squiddy idle.png" id="2_pylxh"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_8ifh5"]
+size = Vector2(32, 72)
+
+[node name="SquiddyEnemy" type="CharacterBody2D"]
+collision_layer = 4
+script = ExtResource("2_ehycd")
+max_health = 4
+damage_per_hit = 1
+sprite_path = NodePath("Sprite2D")
+animation_player_path = NodePath("AnimationPlayer")
+health_bar_path = NodePath("HealthBar")
+
+[node name="Sprite2D" type="Sprite2D" parent="."]
+position = Vector2(0, -48)
+scale = Vector2(2, 2)
+texture = ExtResource("2_pylxh")
+hframes = 7
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+position = Vector2(0, -36)
+shape = SubResource("RectangleShape2D_8ifh5")
+
+[node name="AnimationPlayer" type="AnimationPlayer" parent="."]
+
+[node name="HealthBar" type="ProgressBar" parent="."]
+offset_left = -17.0
+offset_top = -90.0
+offset_right = 17.0
+offset_bottom = -82.0
+max_value = 10.0
+step = 1.0
+show_percentage = false
