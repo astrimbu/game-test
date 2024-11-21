@@ -8,6 +8,8 @@ const RESPAWN_DELAY = 3.0
 # Make these configurable per enemy type
 @export var max_health := 10
 @export var damage_per_hit := 2
+@export var xp_value: int = 10
+@export var coin_value: int = 5
 
 # Required node paths
 @export var sprite_path: NodePath
@@ -83,7 +85,7 @@ func hit(attack_position: Vector2):
 	if current_health <= 0:
 		die()
 
-func die():
+func die() -> void:
 	is_dead = true
 	velocity = Vector2.ZERO
 	
@@ -91,6 +93,10 @@ func die():
 	if animation_player.has_animation("die"):
 		animation_player.play("die")
 		await animation_player.animation_finished
+	
+	# Drop rewards
+	player.resources.add_xp(xp_value)
+	player.resources.add_coins(coin_value)
 	
 	# Hide the enemy
 	hide()

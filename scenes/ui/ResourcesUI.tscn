@@ -1,0 +1,31 @@
+[gd_scene load_steps=2 format=3 uid="uid://ckb71rvixf3ol"]
+
+[ext_resource type="Texture2D" uid="uid://b4axpw0vdvooe" path="res://assets/Coins.png" id="1_2n26u"]
+
+[node name="ResourcesUi" type="MarginContainer"]
+top_level = true
+
+[node name="HBoxContainer" type="HBoxContainer" parent="."]
+layout_mode = 2
+theme_override_constants/separation = 16
+alignment = 1
+
+[node name="LevelLabel" type="Label" parent="HBoxContainer"]
+layout_mode = 2
+text = "LVL: 1"
+
+[node name="XPLabel" type="Label" parent="HBoxContainer"]
+layout_mode = 2
+text = "XP: 0"
+
+[node name="CoinsContainer" type="HBoxContainer" parent="HBoxContainer"]
+layout_mode = 2
+
+[node name="CoinsTexture" type="TextureRect" parent="HBoxContainer/CoinsContainer"]
+layout_mode = 2
+texture = ExtResource("1_2n26u")
+stretch_mode = 3
+
+[node name="CoinsLabel" type="Label" parent="HBoxContainer/CoinsContainer"]
+layout_mode = 2
+text = "0"

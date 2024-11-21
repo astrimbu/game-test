@@ -1,6 +1,6 @@
 [gd_scene load_steps=7 format=3 uid="uid://dndowvq5bcaj0"]
 
-[ext_resource type="Script" path="res://scripts/npcs/SquiddyNPC.gd" id="1_h18vo"]
+[ext_resource type="Script" path="res://scripts/npcs/squiddy_npc.gd" id="1_h18vo"]
 [ext_resource type="Texture2D" uid="uid://dj5rc02vhl70x" path="res://assets/Squiddy idle.png" id="2_4jib0"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_x8q76"]

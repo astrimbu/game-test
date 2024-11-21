@@ -24,6 +24,7 @@ var target_npc = null
 @onready var sprite = $Sprite2D
 @onready var animation_player = $AnimationPlayer
 @onready var target_indicator = $"../TargetIndicator"
+@onready var resources = PlayerResources.new()
 
 # Define states
 enum State { IDLE, WALKING, JUMPING, MOVING_TO_TARGET, SHOOTING }
@@ -31,6 +32,7 @@ var current_state = State.IDLE
 
 func _ready():
 	add_to_group("player")
+	add_child(resources)  # Important to add as child so signals work properly
 
 func get_walkable_position(clicked_pos: Vector2) -> Vector2:
 	var space_state = get_world_2d().direct_space_state

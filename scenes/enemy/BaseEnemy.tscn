@@ -1,6 +1,6 @@
 [gd_scene load_steps=7 format=3 uid="uid://cu4jtjaesjpcr"]
 
-[ext_resource type="Script" path="res://scripts/enemies/Enemy.gd" id="1_76266"]
+[ext_resource type="Script" path="res://scripts/enemies/base_enemy.gd" id="1_76266"]
 [ext_resource type="Texture2D" uid="uid://dj5rc02vhl70x" path="res://assets/Squiddy idle.png" id="2_nnsvu"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_fclw4"]

@@ -1,6 +1,6 @@
 [gd_scene load_steps=12 format=3 uid="uid://coeakbrtx0usb"]
 
-[ext_resource type="Script" path="res://scripts/Player.gd" id="1_w2q4p"]
+[ext_resource type="Script" path="res://scripts/player.gd" id="1_w2q4p"]
 [ext_resource type="Texture2D" uid="uid://bbocld0ulddwv" path="res://assets/Walking stick figure.png" id="2_abyqb"]
 [ext_resource type="Texture2D" uid="uid://e8knndvd0jb2" path="res://assets/Idle stick figure.png" id="3_hswh4"]
 [ext_resource type="Texture2D" uid="uid://y48kchddtn0u" path="res://assets/hats/Hat1.png" id="3_ykxss"]

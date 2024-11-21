@@ -1,6 +1,6 @@
 [gd_scene load_steps=7 format=3 uid="uid://bs75uf41jp57v"]
 
-[ext_resource type="Script" path="res://scripts/enemies/BatEnemy.gd" id="1_4rhy8"]
+[ext_resource type="Script" path="res://scripts/enemies/bat_enemy.gd" id="1_4rhy8"]
 [ext_resource type="Texture2D" uid="uid://b8qf3db4d020f" path="res://assets/Bat idle.png" id="2_84sh0"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_o7fh1"]
