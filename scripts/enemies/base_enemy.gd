@@ -8,8 +8,8 @@ const RESPAWN_DELAY = 3.0
 # Make these configurable per enemy type
 @export var max_health := 10
 @export var damage_per_hit := 2
-@export var xp_value: int = 10
-@export var coin_value: int = 5
+@export var xp_value: int = 1
+@export var coin_value: int = 1
 
 # Required node paths
 @export var sprite_path: NodePath

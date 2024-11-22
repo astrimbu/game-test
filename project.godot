@@ -15,6 +15,10 @@ run/main_scene="res://scenes/World.tscn"
 config/features=PackedStringArray("4.3", "Mobile")
 config/icon="res://icon.svg"
 
+[gui]
+
+theme/custom_font="res://fantasque.tres"
+
 [input]
 
 ui_accept={

@@ -1,0 +1,6 @@
+[gd_resource type="FontVariation" load_steps=2 format=3 uid="uid://cweo5piu1f8ds"]
+
+[ext_resource type="FontFile" uid="uid://dxnn0juw28nj6" path="res://FantasqueSansMNerdFont-Regular.ttf" id="1_2ms6j"]
+
+[resource]
+base_font = ExtResource("1_2ms6j")
