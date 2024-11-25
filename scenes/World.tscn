@@ -1,5 +1,6 @@
-[gd_scene load_steps=13 format=4 uid="uid://dkw8mesi6bhq"]
+[gd_scene load_steps=14 format=4 uid="uid://dkw8mesi6bhq"]
 
+[ext_resource type="Script" path="res://scripts/world.gd" id="1_0qon1"]
 [ext_resource type="Texture2D" uid="uid://da1w3wjokxea2" path="res://assets/Simple tiles.png" id="1_m1jb0"]
 [ext_resource type="PackedScene" uid="uid://coeakbrtx0usb" path="res://scenes/Player.tscn" id="2_npu5e"]
 [ext_resource type="PackedScene" uid="uid://bs75uf41jp57v" path="res://scenes/enemy/BatEnemy.tscn" id="2_rfy4o"]
@@ -162,6 +163,7 @@ _data = {
 }
 
 [node name="World" type="Node2D"]
+script = ExtResource("1_0qon1")
 
 [node name="Ground" type="TileMapLayer" parent="."]
 visibility_layer = 3

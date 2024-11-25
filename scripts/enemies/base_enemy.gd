@@ -10,6 +10,7 @@ const RESPAWN_DELAY = 3.0
 @export var damage_per_hit := 2
 @export var xp_value: int = 1
 @export var coin_value: int = 1
+@export var indicator_offset := 64.0
 
 # Required node paths
 @export var sprite_path: NodePath
@@ -29,6 +30,12 @@ var knockback_direction = Vector2.ZERO
 var knockback_timer = 0.0
 var current_health
 var is_dead = false
+
+# Add to existing variables
+@export var dropped_item_scene: PackedScene = preload("res://scenes/DroppedItem.tscn")
+
+signal enemy_died(enemy: Enemy)
+signal enemy_respawned(enemy: Enemy)
 
 func _ready():
 	# Validate required nodes
@@ -94,17 +101,35 @@ func die() -> void:
 		animation_player.play("die")
 		await animation_player.animation_finished
 	
-	# Drop rewards
-	player.resources.add_xp(xp_value)
-	player.resources.add_coins(coin_value)
+	# Drop coins as physical items
+	if coin_value > 0:
+		var dropped_item = dropped_item_scene.instantiate()
+		get_parent().add_child(dropped_item)
+		dropped_item.initialize({
+			"type": "coin",
+			"value": coin_value
+		}, global_position)
+		dropped_item.collected.connect(_on_item_collected)
 	
-	# Hide the enemy
-	hide()
-	health_bar.hide()
+	# Store references before removing from scene
+	var parent = get_parent()
+	var tree = get_tree()
 	
-	# Start respawn timer
-	await get_tree().create_timer(RESPAWN_DELAY).timeout
+	# Emit signal and remove from scene
+	enemy_died.emit(self)
+	parent.remove_child(self)
+	
+	# Create timer while we still have tree access
+	var timer = tree.create_timer(RESPAWN_DELAY)
+	await timer.timeout
+	
+	# Add back to scene tree and respawn
+	parent.add_child(self)
 	respawn()
+
+func _on_item_collected(item_data: Dictionary):
+	if item_data.type == "coin":
+		player.resources.add_coins(item_data.value)
 
 func respawn():
 	# Reset position and state
@@ -121,6 +146,9 @@ func respawn():
 	# Play idle animation if it exists
 	if animation_player.has_animation("idle"):
 		animation_player.play("idle")
+	
+	# Emit respawn signal
+	enemy_respawned.emit(self)
 
 func _input(event):
 	if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:

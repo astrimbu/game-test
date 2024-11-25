@@ -27,12 +27,44 @@ var target_npc = null
 @onready var resources = PlayerResources.new()
 
 # Define states
-enum State { IDLE, WALKING, JUMPING, MOVING_TO_TARGET, SHOOTING }
-var current_state = State.IDLE
+# enum State { IDLE, WALKING, JUMPING, MOVING_TO_TARGET, SHOOTING }
+var current_state: PlayerState = null
+var states: Dictionary = {}
 
 func _ready():
 	add_to_group("player")
-	add_child(resources)  # Important to add as child so signals work properly
+	add_child(resources)
+	
+	# Initialize states
+	states = {
+		"idle": IdleState.new(),
+		"walking": WalkingState.new(),
+		"jumping": JumpingState.new(),
+		"moving_to_target": MovingToTargetState.new(),
+		"shooting": ShootingState.new()
+	}
+	
+	# Start in idle state
+	set_state("idle")
+
+func set_state(new_state_name: String) -> void:
+	if current_state:
+		current_state.exit_state(self)
+	
+	current_state = states[new_state_name]
+	current_state.enter_state(self)
+
+func _physics_process(delta: float) -> void:
+	# Update target indicator position if we have a target enemy
+	if target_enemy and target_indicator.visible:
+		target_indicator.global_position = target_enemy.global_position - Vector2(0, target_enemy.indicator_offset)
+	
+	if current_state:
+		current_state.update_state(self, delta)
+
+func _unhandled_input(event: InputEvent) -> void:
+	if current_state:
+		current_state.handle_input(self, event)
 
 func get_walkable_position(clicked_pos: Vector2) -> Vector2:
 	var space_state = get_world_2d().direct_space_state
@@ -63,35 +95,6 @@ func get_walkable_position(clicked_pos: Vector2) -> Vector2:
 			return Vector2(clicked_pos.x, platform_y)
 	
 	return position
-
-func _physics_process(delta):
-	# Update target indicator position if we have a target enemy
-	if target_enemy and target_indicator.visible:
-		target_indicator.global_position = target_enemy.global_position - Vector2(0, target_enemy.sprite.texture.get_height() * 2)
-
-	# Apply gravity first
-	if not is_on_floor():
-		velocity.y += gravity * delta
-
-	# Then handle states
-	match current_state:
-		State.IDLE:
-			handle_idle_state(delta)
-		State.WALKING:
-			handle_walking_state(delta)
-		State.JUMPING:
-			handle_jumping_state(delta)
-		State.MOVING_TO_TARGET:
-			handle_moving_to_target_state(delta)
-		State.SHOOTING:
-			handle_shooting_state(delta)
-	
-	# Apply movement last
-	move_and_slide()
-
-	# Handle shooting
-	if Input.is_action_just_pressed("shoot"):
-		shoot()
 
 func handle_click(clicked_pos: Vector2):
 	# Don't interrupt if we're in the middle of a manual shooting animation
@@ -131,259 +134,29 @@ func handle_click(clicked_pos: Vector2):
 				
 				# Update target indicator above NPC's head
 				target_indicator.visible = true
-				target_indicator.global_position = clicked_object.global_position - Vector2(0, clicked_object.sprite.texture.get_height() * 2)
+				target_indicator.global_position = clicked_object.global_position - Vector2(0, clicked_object.indicator_offset)
 
-				current_state = State.MOVING_TO_TARGET
+				set_state("moving_to_target")
 				return
 			elif clicked_object.get_collision_layer_value(3):  # Enemy check
 				# Prevent spam clicking
 				if is_shooting:
-					current_state = State.IDLE
+					set_state("idle")
 					return
 
 				target_enemy = clicked_object
 				target_indicator.visible = true
-				target_indicator.global_position = clicked_object.global_position - Vector2(0, clicked_object.sprite.texture.get_height() * 2)
+				target_indicator.global_position = clicked_object.global_position - Vector2(0, clicked_object.indicator_offset)
 				
 				target_position = get_walkable_position(clicked_object.global_position)
-				current_state = State.MOVING_TO_TARGET
+				set_state("moving_to_target")
 				return
 	
 	# If no interactive object was clicked, handle as normal movement
 	target_position = get_walkable_position(clicked_pos)
 	target_indicator.visible = true
 	target_indicator.global_position = target_position
-	current_state = State.MOVING_TO_TARGET
-
-func handle_idle_state(delta):
-	if Input.is_action_just_pressed("click"):
-		handle_click(get_global_mouse_position())
-		return
-	
-	# Only process horizontal movement if on floor
-	if is_on_floor():
-		velocity.x = move_toward(velocity.x, 0, SPEED)
-		if Input.get_axis("ui_left", "ui_right") != 0:
-			current_state = State.WALKING
-	
-	if not is_shooting:
-		animation_player.play("idle")
-	
-	if Input.is_action_just_pressed("shoot"):
-		current_state = State.SHOOTING
-
-	if Input.is_action_pressed("ui_up") and is_on_floor() and has_platform_above():
-		current_state = State.JUMPING
-	
-	# Modify platform drop-through check
-	if Input.is_action_pressed("ui_down") and is_on_floor() and can_drop_through:
-		if has_platform_below():
-			drop_through_platform()
-
-func handle_walking_state(delta):
-	# Only allow walking state when on floor
-	if not is_on_floor():
-		current_state = State.IDLE
-		return
-	
-	# Check for click movement first
-	if Input.is_action_just_pressed("click"):
-		handle_click(get_global_mouse_position())
-		return
-	
-	var direction = Input.get_axis("ui_left", "ui_right")
-	
-	if direction != 0:
-		if will_fall_off_edge(direction):
-			velocity.x = 0
-		else:
-			if direction != last_direction:  # Check for mismatch
-				last_direction = direction
-				scale.x = -1
-			velocity.x = direction * SPEED
-	else:
-		velocity.x = 0
-	
-	if Input.is_action_just_pressed("shoot"):
-		velocity.x = 0
-		shoot()
-		return
-	elif Input.is_action_pressed("ui_accept") and has_platform_above():
-		current_state = State.JUMPING
-		return
-	
-	animation_player.play("walk")
-	
-	if direction == 0:
-		current_state = State.IDLE
-
-func handle_jumping_state(delta):
-	velocity.y = JUMP_VELOCITY
-	velocity.x = 0  # Keep vertical-only jump
-	
-	animation_player.play("jump")
-	if target_position:
-		current_state = State.MOVING_TO_TARGET  # Return to moving if we have a target
-	else:
-		current_state = State.IDLE  # Only go to idle if no target
-
-func handle_moving_to_target_state(delta):
-	# Allow interruption with new clicks or shooting
-	if Input.is_action_just_pressed("click"):
-		handle_click(get_global_mouse_position())
-		return
-
-	if Input.is_action_just_pressed("shoot"):
-		target_position = null
-		target_indicator.visible = false
-		shoot()
-		return
-	
-	if not target_position:
-		target_indicator.visible = false
-		current_state = State.IDLE
-		return
-	
-	# Check if we need to jump to reach the target
-	if target_position.y < position.y - 10 and is_on_floor():  # Target is above us
-		if has_platform_above():  # Only jump if there's actually a platform above
-			current_state = State.JUMPING
-			return
-	
-	# Check if we need to drop through to reach the target
-	if target_position.y > position.y + 10 and is_on_floor():  # Target is below us
-		if has_platform_below() and can_drop_through:
-			drop_through_platform()
-			# Don't return here, let the character keep moving horizontally
-	
-	# Move towards the target
-	var direction_to_target = sign(target_position.x - position.x)
-	var at_target_x = abs(position.x - target_position.x) <= 10
-	var at_target_y = abs(position.y - target_position.y) <= 10
-	
-	if not (at_target_x and at_target_y):
-		if not at_target_x:  # Only move horizontally if we're not at the target x
-			if direction_to_target != last_direction:  # Check for mismatch
-				last_direction = direction_to_target
-				scale.x = -1
-			velocity.x = direction_to_target * SPEED
-			if will_fall_off_edge(direction_to_target):
-				velocity.x = 0
-			animation_player.play("walk")
-			
-			# Check if we can start shooting while moving
-			if target_enemy and not target_enemy.is_dead:
-				var height_difference = abs(target_enemy.global_position.y - global_position.y)
-				if height_difference <= 10 and is_on_floor():
-					current_state = State.SHOOTING
-					return
-		else:
-			velocity.x = 0
-	else:
-		velocity.x = 0
-		if is_on_floor():  # Only clear target and return to idle if we're on the ground
-			if target_enemy and not target_enemy.is_dead:
-				current_state = State.SHOOTING
-			elif target_npc and target_npc.can_interact:
-				target_npc.start_interaction()
-				target_npc = null
-				target_indicator.visible = false
-				target_position = null
-				current_state = State.IDLE
-			else:
-				target_indicator.visible = false
-				target_position = null
-				current_state = State.IDLE
-
-func handle_shooting_state(delta):
-	# Check for click interruption first
-	if Input.is_action_just_pressed("click"):
-		handle_click(get_global_mouse_position())
-		return
-	
-	if is_on_floor():
-		velocity.x = 0
-	
-	# Separate handling for auto and manual shooting
-	if target_enemy:
-		handle_auto_shooting()
-	else:
-		handle_manual_shooting()
-
-func handle_auto_shooting():
-	if not is_shooting:
-		shoot(true)  # true indicates auto-shooting
-
-func handle_manual_shooting():
-	if Input.is_action_pressed("ui_accept"):
-		if not is_shooting:
-			shoot(false)  # false indicates manual shooting
-	elif not is_shooting:
-		current_state = State.IDLE
-		animation_player.play("idle")
-
-func shoot(is_auto: bool = false):
-	# Check for click interruption first
-	if Input.is_action_just_pressed("click"):
-		handle_click(get_global_mouse_position())
-		return
-	
-	if is_shooting:
-		return
-	
-	current_state = State.SHOOTING
-	is_shooting = true
-	animation_player.play("shoot")
-	queue_redraw()
-	
-	# Add delay to match animation
-	await get_tree().create_timer(0.2).timeout
-	
-	# Check again if target was cleared during the delay
-	if target_enemy == null and is_auto:
-		is_shooting = false
-		current_state = State.IDLE
-		animation_player.play("idle")
-		return
-	
-	# Calculate shoot position offset from center (30 pixels up)
-	var shoot_position = global_position + Vector2(0, -60)
-	
-	# Create a raycast in the direction the player is facing
-	var space_state = get_world_2d().direct_space_state
-	var query = PhysicsRayQueryParameters2D.create(
-		shoot_position,
-		shoot_position + Vector2(last_direction * 1000, 0)  # 1000 pixels range
-	)
-	query.collision_mask = 0b100  # Layer 3 (Enemy)
-	var result = space_state.intersect_ray(query)
-	
-	if result:
-		var enemy = result.collider
-		if enemy.has_method("hit"):
-			enemy.hit(shoot_position)
-			if enemy.is_dead:
-				target_enemy = null
-				target_position = null
-				target_indicator.visible = false
-
-	# Wait for animation to complete
-	await animation_player.animation_finished
-	
-	is_shooting = false
-	if (is_auto and target_enemy) or (not is_auto and Input.is_action_pressed("ui_accept")):
-		# For manual shooting, immediately start next shot if spacebar still held
-		if not is_auto:
-			shoot(false)
-		# For auto shooting, add a small delay between shots
-		else:
-			await get_tree().create_timer(0.1).timeout
-			if target_enemy:  # Check if target still exists after delay
-				shoot(true)
-	else:
-		current_state = State.IDLE
-		animation_player.play("idle")
-	queue_redraw()
+	set_state("moving_to_target")
 
 func will_fall_off_edge(direction: float) -> bool:
 	var space_state = get_world_2d().direct_space_state
@@ -496,17 +269,80 @@ func set_target_enemy(enemy):
 	
 	# Update target indicator
 	target_indicator.visible = true
-	target_indicator.global_position = enemy.global_position - Vector2(0, enemy.sprite.texture.get_height() * 2)
+	target_indicator.global_position = enemy.global_position - Vector2(0, enemy.indicator_offset)
 	
 	# Get enemy platform position
 	var platform_position = get_walkable_position(enemy.global_position)
 	
 	# Always move to enemy platform first
 	target_position = platform_position
-	current_state = State.MOVING_TO_TARGET
+	set_state("moving_to_target")
 
-func _draw():
-	if OS.is_debug_build():
+func shoot(is_auto: bool = false):
+	# Check for click interruption first
+	if Input.is_action_just_pressed("click"):
+		handle_click(get_global_mouse_position())
+		return
+	
+	if is_shooting:
+		return
+	
+	current_state = states["shooting"]
+	is_shooting = true
+	animation_player.play("shoot")
+	queue_redraw()
+	
+	# Add delay to match animation
+	await get_tree().create_timer(0.2).timeout
+	
+	# Check again if target was cleared during the delay
+	if target_enemy == null and is_auto:
+		is_shooting = false
+		set_state("idle")
+		animation_player.play("idle")
+		return
+	
+	# Calculate shoot position offset from center (30 pixels up)
+	var shoot_position = global_position + Vector2(0, -60)
+	
+	# Create a raycast in the direction the player is facing
+	var space_state = get_world_2d().direct_space_state
+	var query = PhysicsRayQueryParameters2D.create(
+		shoot_position,
+		shoot_position + Vector2(last_direction * 1000, 0)  # 1000 pixels range
+	)
+	query.collision_mask = 0b100  # Layer 3 (Enemy)
+	var result = space_state.intersect_ray(query)
+	
+	if result:
+		var enemy = result.collider
+		if enemy.has_method("hit"):
+			enemy.hit(shoot_position)
+			if enemy.is_dead:
+				target_enemy = null
+				target_position = null
+				target_indicator.visible = false
+
+	# Wait for animation to complete
+	await animation_player.animation_finished
+	
+	is_shooting = false
+	if (is_auto and target_enemy) or (not is_auto and Input.is_action_pressed("ui_accept")):
+		# For manual shooting, immediately start next shot if spacebar still held
+		if not is_auto:
+			shoot(false)
+		# For auto shooting, add a small delay between shots
+		else:
+			await get_tree().create_timer(0.1).timeout
+			if target_enemy:  # Check if target still exists after delay
+				shoot(true)
+	else:
+		set_state("idle")
+		animation_player.play("idle")
+	queue_redraw()
+
+#func _draw():
+	#if OS.is_debug_build():
 		# Edge detection raycasts
 		#for angle_deg in RAY_ANGLES:
 			#for direction in [-1, 1]:
@@ -516,9 +352,7 @@ func _draw():
 					#-sin(angle) * RAY_LENGTH
 				#)
 				#draw_line(Vector2.ZERO, ray_end, Color(1, 1, 0, 0.2))
-		
-		# Add shooting raycast visualization with adjusted height
-		if is_shooting:
-			var shoot_start = Vector2(35, -55)
-			var shoot_end = shoot_start + Vector2(1000, 0)
-			draw_line(shoot_start, shoot_end, Color(1, 0, 0, .8), 2.0)
+		# if is_shooting:
+		# 	var shoot_start = Vector2(35, -55)
+		# 	var shoot_end = shoot_start + Vector2(1000, 0)
+		# 	draw_line(shoot_start, shoot_end, Color(1, 0, 0, .8), 2.0)
