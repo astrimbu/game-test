@@ -12,17 +12,9 @@ func update_state(player: CharacterBody2D, delta: float) -> void:
 		return
 	
 	var direction = Input.get_axis("ui_left", "ui_right")
+	player.movement.move(direction)
 	
-	if direction != 0:
-		if player.will_fall_off_edge(direction):
-			player.velocity.x = 0
-		else:
-			if direction != player.last_direction:
-				player.last_direction = direction
-				player.scale.x = -1
-			player.velocity.x = direction * player.SPEED
-	else:
-		player.velocity.x = 0
+	if direction == 0:
 		player.set_state("idle")
 		return
 	
@@ -31,10 +23,3 @@ func update_state(player: CharacterBody2D, delta: float) -> void:
 		return
 	
 	player.move_and_slide()
-
-func handle_input(player: CharacterBody2D, event: InputEvent) -> void:
-	if event.is_action_pressed("click"):
-		handle_click(player, player.get_global_mouse_position())
-	elif event.is_action_pressed("shoot"):
-		player.velocity.x = 0
-		player.set_state("shooting") 

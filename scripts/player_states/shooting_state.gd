@@ -17,8 +17,7 @@ func update_state(player: CharacterBody2D, delta: float) -> void:
 	if not player.is_shooting and not player.target_enemy:
 		player.set_state("idle")
 
-func handle_input(player: CharacterBody2D, event: InputEvent) -> void:
-	if event.is_action_pressed("click"):
-		handle_click(player, player.get_global_mouse_position())
-	elif event.is_action_pressed("shoot") and not player.is_shooting:
-		player.shoot(player.target_enemy != null) 
+func exit_state(player: CharacterBody2D) -> void:
+	# Make sure we clean up shooting state when interrupted
+	player.is_shooting = false
+	player.animation_player.play("idle")

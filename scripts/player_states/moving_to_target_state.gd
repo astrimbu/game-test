@@ -9,7 +9,7 @@ func update_state(player: CharacterBody2D, delta: float) -> void:
 	apply_gravity(player, delta)
 	
 	if not player.target_position:
-		player.target_indicator.visible = false
+		player.interaction.clear_targets()
 		player.set_state("idle")
 		return
 	
@@ -31,13 +31,7 @@ func update_state(player: CharacterBody2D, delta: float) -> void:
 	
 	if not (at_target_x and at_target_y):
 		if not at_target_x:
-			if direction_to_target != player.last_direction:
-				player.last_direction = direction_to_target
-				player.scale.x = -1
-			player.velocity.x = direction_to_target * player.SPEED
-			if player.will_fall_off_edge(direction_to_target):
-				player.velocity.x = 0
-			player.animation_player.play("walk")
+			player.movement.move(direction_to_target)
 			
 			# Check if we can start shooting while moving
 			if player.target_enemy and not player.target_enemy.is_dead:
@@ -46,29 +40,18 @@ func update_state(player: CharacterBody2D, delta: float) -> void:
 					player.set_state("shooting")
 					return
 		else:
-			player.velocity.x = 0
+			player.movement.move(0)
 	else:
-		player.velocity.x = 0
+		player.movement.move(0)
 		if player.is_on_floor():
 			if player.target_enemy and not player.target_enemy.is_dead:
 				player.set_state("shooting")
 			elif player.target_npc and player.target_npc.can_interact:
 				player.target_npc.start_interaction()
-				player.target_npc = null
-				player.target_indicator.visible = false
-				player.target_position = null
+				player.interaction.clear_targets()
 				player.set_state("idle")
 			else:
-				player.target_indicator.visible = false
-				player.target_position = null
+				player.interaction.clear_targets()
 				player.set_state("idle")
 	
 	player.move_and_slide()
-
-func handle_input(player: CharacterBody2D, event: InputEvent) -> void:
-	if event.is_action_pressed("click"):
-		handle_click(player, player.get_global_mouse_position())
-	elif event.is_action_pressed("shoot"):
-		player.target_position = null
-		player.target_indicator.visible = false
-		player.set_state("shooting") 

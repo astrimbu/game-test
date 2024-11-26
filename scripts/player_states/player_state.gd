@@ -12,16 +12,15 @@ func update_state(player: CharacterBody2D, delta: float) -> void:
 	pass
 
 func handle_input(player: CharacterBody2D, event: InputEvent) -> void:
-	pass
+	if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
+		var global_click_pos = player.get_global_mouse_position()
+		player.set_state("moving_to_target")
+		player.handle_click(global_click_pos)
+	elif event.is_action_pressed("shoot"):
+		player.set_state("shooting")
 
 # Common utility methods that states might need
 func apply_gravity(player: CharacterBody2D, delta: float) -> void:
 	if not player.is_on_floor():
 		player.velocity.y += player.gravity * delta
-
-func handle_click(player: CharacterBody2D, clicked_pos: Vector2) -> void:
-	# Don't interrupt if we're in the middle of a manual shooting animation
-	if player.is_shooting and not player.target_enemy:
-		return
-		
-	player.handle_click(clicked_pos) 
+ 

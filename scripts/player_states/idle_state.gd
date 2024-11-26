@@ -10,7 +10,7 @@ func update_state(player: CharacterBody2D, delta: float) -> void:
 	apply_gravity(player, delta)
 	
 	if player.is_on_floor():
-		player.velocity.x = move_toward(player.velocity.x, 0, player.SPEED)
+		player.velocity.x = move_toward(player.velocity.x, 0, player.config.SPEED)
 		
 		# Check for movement input
 		if Input.get_axis("ui_left", "ui_right") != 0:
@@ -29,9 +29,3 @@ func update_state(player: CharacterBody2D, delta: float) -> void:
 	
 	# Apply movement
 	player.move_and_slide()
-
-func handle_input(player: CharacterBody2D, event: InputEvent) -> void:
-	if event.is_action_pressed("click"):
-		handle_click(player, player.get_global_mouse_position())
-	elif event.is_action_pressed("shoot"):
-		player.set_state("shooting") 

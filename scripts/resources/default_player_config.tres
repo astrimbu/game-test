@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="PlayerConfig" load_steps=2 format=3 uid="uid://bgam8a3bmrqa0"]
+
+[ext_resource type="Script" path="res://scripts/resources/player_config.gd" id="1_xh8wu"]
+
+[resource]
+script = ExtResource("1_xh8wu")
+SPEED = 200.0
+JUMP_VELOCITY = -350.0
+DROP_THROUGH_DURATION = 0.2
+DROP_CHECK_DISTANCE = 400.0
+JUMP_CHECK_DISTANCE = 100.0
+RAY_LENGTH = 200.0
+JUMP_POSITION_TOLERANCE = 20.0
+INTERACTION_DISTANCE = 86.0
+RAY_ANGLES = Array[float]([0.0, 15.0, 30.0, 45.0, 60.0])
