@@ -14,9 +14,9 @@ var drop_duration: float = 0.75
 var time_elapsed: float = 0.0
 
 func _ready():
-	# Set collision layer to something different from enemies/NPCs
+	# Set collision layer to Layer 5 (Items)
 	collision_layer = 0b10000  # Layer 5
-	collision_mask = 0
+	collision_mask = 0  # We don't need to detect collisions with anything
 	
 	# Set up collision detection
 	input_event.connect(_on_input_event)
@@ -40,8 +40,8 @@ func _physics_process(delta):
 		position = target_position + Vector2(0, drop_height * (1.0 - t))
 
 func _on_input_event(_viewport, event: InputEvent, _shape_idx):
-	if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
-		collect()
+	# Remove this part since we're handling collection through PlayerInteraction now
+	pass
 
 func collect():
 	collected.emit(item_data)

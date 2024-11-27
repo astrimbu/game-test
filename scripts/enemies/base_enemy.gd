@@ -101,6 +101,10 @@ func die() -> void:
 		animation_player.play("die")
 		await animation_player.animation_finished
 	
+	# Grant XP to player
+	if xp_value > 0:
+		player.resources.add_xp(xp_value)
+	
 	# Drop coins as physical items
 	if coin_value > 0:
 		var dropped_item = dropped_item_scene.instantiate()
@@ -149,8 +153,3 @@ func respawn():
 	
 	# Emit respawn signal
 	enemy_respawned.emit(self)
-
-func _input(event):
-	if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
-		if get_global_mouse_position().distance_to(global_position) < sprite.texture.get_width() / 2:
-			player.set_target_enemy(self)

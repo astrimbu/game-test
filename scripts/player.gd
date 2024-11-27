@@ -45,6 +45,7 @@ func _ready():
 	combat.config = config
 	interaction.character = self
 	interaction.config = config
+	interaction.target_indicator = target_indicator
 	
 	# Initialize states
 	states = {
@@ -103,8 +104,17 @@ func set_state(new_state_name: String) -> void:
 func shoot(is_auto: bool = false) -> void:
 	combat.shoot(is_auto)
 
+# Split handle_click into two separate methods
+func handle_mouse_down(clicked_pos: Vector2) -> void:
+	interaction.handle_mouse_down(clicked_pos)
+
+func handle_mouse_up(clicked_pos: Vector2) -> void:
+	interaction.handle_mouse_up(clicked_pos)
+
+# Keep the original handle_click for backward compatibility if needed
 func handle_click(clicked_pos: Vector2) -> void:
-	interaction.handle_click(clicked_pos)
+	handle_mouse_down(clicked_pos)
+	handle_mouse_up(clicked_pos)
 
 func has_platform_above() -> bool:
 	return movement.has_platform_above()

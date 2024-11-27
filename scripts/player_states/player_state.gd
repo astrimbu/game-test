@@ -12,10 +12,16 @@ func update_state(player: CharacterBody2D, delta: float) -> void:
 	pass
 
 func handle_input(player: CharacterBody2D, event: InputEvent) -> void:
-	if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
+	if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT:
 		var global_click_pos = player.get_global_mouse_position()
-		player.set_state("moving_to_target")
-		player.handle_click(global_click_pos)
+		if event.pressed:
+			# Handle mouse down - only check for items
+			player.handle_mouse_down(global_click_pos)
+		else:
+			# Handle mouse up - check for other interactions if no item was picked up
+			if not player.interaction.item_picked_up:
+				player.set_state("moving_to_target")
+				player.handle_mouse_up(global_click_pos)
 	elif event.is_action_pressed("shoot"):
 		player.set_state("shooting")
 

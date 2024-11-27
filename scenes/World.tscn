@@ -178,7 +178,7 @@ hframes = 8
 
 [node name="BatEnemy" parent="." instance=ExtResource("2_rfy4o")]
 position = Vector2(320, 464)
-max_health = 3
+max_health = 10
 damage_per_hit = 2
 xp_value = 5
 

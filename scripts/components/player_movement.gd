@@ -28,7 +28,6 @@ func jump() -> void:
 		jumped.emit()
 
 func move(direction: float) -> void:
-	print("move direction: ", direction)
 	if direction != 0:
 		set_facing_direction(direction)
 		if will_fall_off_edge(direction):

@@ -12,6 +12,14 @@ signal killed_enemy(enemy)
 
 var is_shooting := false
 var target_enemy: CharacterBody2D = null
+var shoot_timer: Timer = null
+
+func _ready():
+	# Initialize and configure the shoot timer
+	shoot_timer = Timer.new()
+	shoot_timer.one_shot = true
+	shoot_timer.connect("timeout", Callable(self, "_on_shoot_timer_timeout"))
+	add_child(shoot_timer)
 
 func shoot(is_auto: bool = false) -> void:
 	if is_auto:
@@ -25,18 +33,8 @@ func shoot(is_auto: bool = false) -> void:
 	started_shooting.emit()
 	animation_player.play("shoot")
 	
-	# Add delay to match animation
-	await character.get_tree().create_timer(0.2).timeout
-	
-	perform_shoot()
-	
-	# Wait for animation
-	await animation_player.animation_finished
-	
-	if Input.is_action_pressed("ui_accept"):
-		shoot(false)
-	else:
-		_stop_shooting()
+	# Schedule the first shot after 0.2 seconds to match animation timing
+	shoot_timer.start(0.2)
 
 func auto_shoot() -> void:
 	if is_shooting or not target_enemy:
@@ -50,27 +48,22 @@ func auto_shoot() -> void:
 	started_shooting.emit()
 	animation_player.play("shoot")
 	
-	# Add delay to match animation
-	await character.get_tree().create_timer(0.2).timeout
-	
-	if not target_enemy or target_enemy.is_dead:
-		_stop_shooting()
-		return
-	
+	# Schedule the first shot after 0.2 seconds to match animation timing
+	shoot_timer.start(0.2)
+
+func _on_shoot_timer_timeout() -> void:
 	perform_shoot()
 	
-	# Wait for animation
-	await animation_player.animation_finished
+	if animation_player.is_playing() and animation_player.current_animation == "shoot":
+		# Schedule the next shot after the full animation duration (0.6 seconds)
+		shoot_timer.start(0.6)  # Adjusted from 0.3 to 0.6 seconds for proper cooldown
+	else:
+		_stop_shooting()
 	
-	# Important: Reset shooting state and check target before continuing
-	is_shooting = false
-	
-	# Schedule the next shot after a small delay
+	# For auto shooting, check if the target is still valid
 	if target_enemy and not target_enemy.is_dead:
-		var timer = character.get_tree().create_timer(0.1)
-		await timer.timeout
-		if target_enemy and not target_enemy.is_dead:  # Check again after delay
-			auto_shoot()  # Start next shot
+		# No additional action needed; the timer controls the shooting rate
+		pass
 	else:
 		_stop_shooting()
 
@@ -96,11 +89,16 @@ func perform_shoot() -> void:
 			if enemy.is_dead:
 				killed_enemy.emit(enemy)
 				target_enemy = null
+				_stop_shooting()
 
 func _stop_shooting() -> void:
+	if not is_shooting:
+		return
+	
 	is_shooting = false
 	stopped_shooting.emit()
 	animation_player.play("idle")
+	shoot_timer.stop()
 
 func set_target(enemy: CharacterBody2D) -> void:
-	target_enemy = enemy 
+	target_enemy = enemy

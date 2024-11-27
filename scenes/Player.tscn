@@ -1,7 +1,8 @@
-[gd_scene load_steps=17 format=3 uid="uid://coeakbrtx0usb"]
+[gd_scene load_steps=19 format=3 uid="uid://coeakbrtx0usb"]
 
 [ext_resource type="Script" path="res://scripts/player.gd" id="1_w2q4p"]
 [ext_resource type="Texture2D" uid="uid://bbocld0ulddwv" path="res://assets/Walking stick figure.png" id="2_abyqb"]
+[ext_resource type="Script" path="res://scripts/resources/player_config.gd" id="2_rbcy0"]
 [ext_resource type="Texture2D" uid="uid://e8knndvd0jb2" path="res://assets/Idle stick figure.png" id="3_hswh4"]
 [ext_resource type="Texture2D" uid="uid://y48kchddtn0u" path="res://assets/hats/Hat1.png" id="3_ykxss"]
 [ext_resource type="Texture2D" uid="uid://defgy617v1oej" path="res://assets/Shoot stick figure.png" id="4_kexne"]
@@ -10,6 +11,18 @@
 [ext_resource type="Script" path="res://scripts/components/player_combat.gd" id="8_rmla6"]
 [ext_resource type="Script" path="res://scripts/components/player_interaction.gd" id="9_cpyjm"]
 [ext_resource type="Script" path="res://scripts/components/player_animation.gd" id="10_bjyil"]
+
+[sub_resource type="Resource" id="Resource_m05jb"]
+script = ExtResource("2_rbcy0")
+SPEED = 50.0
+JUMP_VELOCITY = -350.0
+DROP_THROUGH_DURATION = 0.2
+DROP_CHECK_DISTANCE = 400.0
+JUMP_CHECK_DISTANCE = 100.0
+RAY_LENGTH = 200.0
+JUMP_POSITION_TOLERANCE = 20.0
+INTERACTION_DISTANCE = 86.0
+RAY_ANGLES = Array[float]([0.0, 15.0, 30.0, 45.0, 60.0])
 
 [sub_resource type="Animation" id="Animation_f4e54"]
 length = 0.001
@@ -143,6 +156,7 @@ tracks/4/keys = {
 [sub_resource type="Animation" id="Animation_ycpfw"]
 resource_name = "shoot"
 length = 0.6
+loop_mode = 1
 step = 0.1
 tracks/0/type = "value"
 tracks/0/imported = false
@@ -285,7 +299,7 @@ size = Vector2(18, 75)
 [node name="Player" type="CharacterBody2D"]
 collision_layer = 2
 script = ExtResource("1_w2q4p")
-config = ExtResource("7_ri2rn")
+config = SubResource("Resource_m05jb")
 
 [node name="Sprite2D" type="Sprite2D" parent="."]
 position = Vector2(0, -40)

@@ -14,17 +14,68 @@ var target_position: Vector2 = Vector2.ZERO
 var target_npc: CharacterBody2D = null
 var ray_length := 50
 
+# Add a constant for pickup range
+const PICKUP_RANGE := 2000.0  # Adjust this value as needed
+
+# Flag to track if an item was picked up on mouse down
+var item_picked_up: bool = false
+
+func _physics_process(_delta: float) -> void:
+	# Update target indicator position if we're targeting an enemy
+	if character.combat and character.combat.target_enemy and target_indicator:
+		var enemy = character.combat.target_enemy
+		if not enemy.is_dead:
+			_update_target_indicator(enemy.global_position - Vector2(0, enemy.indicator_offset))
+
+func handle_mouse_down(clicked_pos: Vector2) -> void:
+	_handle_mouse_down(clicked_pos)
+
+func handle_mouse_up(clicked_pos: Vector2) -> void:
+	_handle_mouse_up(clicked_pos)
+
 func handle_click(clicked_pos: Vector2) -> void:
+	handle_mouse_down(clicked_pos)
+	handle_mouse_up(clicked_pos)
+
+func _handle_mouse_down(clicked_pos: Vector2) -> void:
+	item_picked_up = false  # Reset the flag
 	var space_state = character.get_world_2d().direct_space_state
-	var params = PhysicsPointQueryParameters2D.new()
-	params.position = clicked_pos
-	params.collision_mask = 0b1100  # NPC and Enemy layers
-	params.collide_with_bodies = true
 	
-	var results = space_state.intersect_point(params)
+	# Check for items only
+	var item_params = PhysicsPointQueryParameters2D.new()
+	item_params.position = clicked_pos
+	item_params.collision_mask = 0b10000  # Layer 5 (Items) only
+	item_params.collide_with_areas = true
+	item_params.collide_with_bodies = false
 	
-	if not results.is_empty():
-		var clicked_object = results[0].collider
+	var item_results = space_state.intersect_point(item_params)
+	if not item_results.is_empty():
+		var item = item_results[0].collider
+		if item is DroppedItem:
+			var distance = character.global_position.distance_to(item.global_position)
+			if distance <= PICKUP_RANGE:
+				item.collect()
+				item_picked_up = true
+				if target_indicator:
+					target_indicator.visible = false
+
+func _handle_mouse_up(clicked_pos: Vector2) -> void:
+	# If an item was picked up on mouse down, don't process any other interactions
+	if item_picked_up:
+		return
+	
+	var space_state = character.get_world_2d().direct_space_state
+	
+	# Check for NPCs and Enemies
+	var interact_params = PhysicsPointQueryParameters2D.new()
+	interact_params.position = clicked_pos
+	interact_params.collision_mask = 0b1100  # Layers 3 (Enemy) and 4 (NPC)
+	interact_params.collide_with_bodies = true
+	interact_params.collide_with_areas = false
+	
+	var interact_results = space_state.intersect_point(interact_params)
+	if not interact_results.is_empty():
+		var clicked_object = interact_results[0].collider
 		if clicked_object.get_collision_layer_value(4):  # NPC check
 			_handle_npc_interaction(clicked_object)
 			return
@@ -32,7 +83,7 @@ func handle_click(clicked_pos: Vector2) -> void:
 			_handle_enemy_interaction(clicked_object)
 			return
 	
-	# If no interactive object clicked, handle as movement
+	# If nothing interactive was clicked, handle as movement
 	set_movement_target(get_walkable_position(clicked_pos))
 
 func _handle_npc_interaction(npc: CharacterBody2D) -> void:
@@ -53,7 +104,9 @@ func _handle_npc_interaction(npc: CharacterBody2D) -> void:
 func _handle_enemy_interaction(enemy: CharacterBody2D) -> void:
 	if character.combat:
 		character.combat.set_target(enemy)
+		# Set target position for movement
 		set_movement_target(get_walkable_position(enemy.global_position))
+		# Update indicator above enemy
 		_update_target_indicator(enemy.global_position - Vector2(0, enemy.indicator_offset))
 
 func set_movement_target(pos: Vector2) -> void:
@@ -97,4 +150,4 @@ func clear_targets() -> void:
 	target_npc = null
 	target_position = Vector2.ZERO
 	if target_indicator:
-		target_indicator.visible = false 
+		target_indicator.visible = false
