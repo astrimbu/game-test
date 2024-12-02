@@ -1,7 +1,7 @@
 class_name PlayerConfig
 extends Resource
 
-@export var SPEED := 50.0
+@export var SPEED := 100.0
 @export var JUMP_VELOCITY := -350.0
 @export var DROP_THROUGH_DURATION := 0.2
 @export var DROP_CHECK_DISTANCE := 400.0

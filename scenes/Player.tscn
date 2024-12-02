@@ -14,7 +14,7 @@
 
 [sub_resource type="Resource" id="Resource_m05jb"]
 script = ExtResource("2_rbcy0")
-SPEED = 50.0
+SPEED = 100.0
 JUMP_VELOCITY = -350.0
 DROP_THROUGH_DURATION = 0.2
 DROP_CHECK_DISTANCE = 400.0
