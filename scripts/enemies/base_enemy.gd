@@ -31,8 +31,8 @@ var knockback_timer = 0.0
 var current_health
 var is_dead = false
 
-# Add to existing variables
 @export var dropped_item_scene: PackedScene = preload("res://scenes/DroppedItem.tscn")
+@onready var movement_controller: EnemyMovementController = $MovementController
 
 signal enemy_died(enemy: Enemy)
 signal enemy_respawned(enemy: Enemy)
@@ -46,6 +46,7 @@ func _ready():
 	current_health = max_health
 	setup_health_bar()
 	_init_enemy()
+	movement_controller.init(sprite)
 
 # Virtual method for child classes to override
 func _init_enemy():
@@ -73,6 +74,8 @@ func _physics_process(delta):
 			velocity = Vector2.ZERO
 		else:
 			velocity = knockback_direction * KNOCKBACK_FORCE
+	else:
+		velocity.x = movement_controller.process_movement(delta).x
 	
 	move_and_slide()
 
@@ -80,6 +83,7 @@ func hit(attack_position: Vector2):
 	if is_dead:
 		return
 		
+	movement_controller.stop_movement()  # Stop movement when hit
 	is_being_hit = true
 	knockback_timer = KNOCKBACK_DURATION
 	knockback_direction = (global_position - attack_position).normalized()
@@ -150,6 +154,9 @@ func respawn():
 	# Play idle animation if it exists
 	if animation_player.has_animation("idle"):
 		animation_player.play("idle")
+	
+	# Reset movement controller
+	movement_controller.reset_movement()
 	
 	# Emit respawn signal
 	enemy_respawned.emit(self)
