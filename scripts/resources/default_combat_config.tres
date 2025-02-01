@@ -1,0 +1,10 @@
+[gd_resource type="Resource" script_class="CombatConfig" load_steps=2 format=3 uid="uid://1uctrudg0cwb"]
+
+[ext_resource type="Script" path="res://scripts/resources/combat_config.gd" id="1_3epgw"]
+
+[resource]
+script = ExtResource("1_3epgw")
+base_damage = 1
+attack_speed = 1.0
+attack_range = 100.0
+projectile_speed = 300.0

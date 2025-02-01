@@ -1,4 +1,4 @@
-[gd_scene load_steps=19 format=3 uid="uid://coeakbrtx0usb"]
+[gd_scene load_steps=21 format=3 uid="uid://coeakbrtx0usb"]
 
 [ext_resource type="Script" path="res://scripts/player.gd" id="1_w2q4p"]
 [ext_resource type="Texture2D" uid="uid://bbocld0ulddwv" path="res://assets/Walking stick figure.png" id="2_abyqb"]
@@ -10,18 +10,23 @@
 [ext_resource type="Resource" uid="uid://bgam8a3bmrqa0" path="res://scripts/resources/default_player_config.tres" id="7_ri2rn"]
 [ext_resource type="Script" path="res://scripts/components/player_combat.gd" id="8_rmla6"]
 [ext_resource type="Script" path="res://scripts/components/player_interaction.gd" id="9_cpyjm"]
+[ext_resource type="Resource" uid="uid://1uctrudg0cwb" path="res://scripts/resources/default_combat_config.tres" id="10_6u5un"]
 [ext_resource type="Script" path="res://scripts/components/player_animation.gd" id="10_bjyil"]
+[ext_resource type="Script" path="res://scripts/player_resources.gd" id="12_wwuf5"]
 
 [sub_resource type="Resource" id="Resource_m05jb"]
 script = ExtResource("2_rbcy0")
-SPEED = 100.0
+SPEED = 200.0
 JUMP_VELOCITY = -350.0
+ACCELERATION = 1000.0
+FRICTION = 1000.0
+AIR_RESISTANCE = 200.0
 DROP_THROUGH_DURATION = 0.2
 DROP_CHECK_DISTANCE = 400.0
 JUMP_CHECK_DISTANCE = 100.0
-RAY_LENGTH = 200.0
 JUMP_POSITION_TOLERANCE = 20.0
 INTERACTION_DISTANCE = 86.0
+RAY_LENGTH = 200.0
 RAY_ANGLES = Array[float]([0.0, 15.0, 30.0, 45.0, 60.0])
 
 [sub_resource type="Animation" id="Animation_f4e54"]
@@ -331,6 +336,7 @@ character = NodePath("..")
 [node name="Combat" type="Node" parent="." node_paths=PackedStringArray("character", "animation_player")]
 script = ExtResource("8_rmla6")
 config = ExtResource("7_ri2rn")
+combat_config = ExtResource("10_6u5un")
 character = NodePath("..")
 animation_player = NodePath("../AnimationPlayer")
 
@@ -343,3 +349,6 @@ character = NodePath("..")
 script = ExtResource("10_bjyil")
 animation_player = NodePath("../AnimationPlayer")
 sprite = NodePath("../Sprite2D")
+
+[node name="Resources" type="Node" parent="."]
+script = ExtResource("12_wwuf5")

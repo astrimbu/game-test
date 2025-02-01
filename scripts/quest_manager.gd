@@ -3,10 +3,6 @@ extends Node
 @onready var QuestDatabase = $QuestDatabase
 @onready var SaveManager = $SaveManager
 
-var available_quests = {}
-var active_quests = {}
-var completed_quests = {}
-
 signal quest_started(quest_id)
 signal quest_updated(quest_id, objective)
 signal quest_completed(quest_id)
@@ -21,34 +17,31 @@ func add_from_database(quest_id: String):
 			quest_data.objectives,
 			quest_data.reward
 		)
-		available_quests[quest_id] = quest
-	else:
-		print("Quest not found in database: ", quest_id)
-
-func start(quest_id):
-	if quest_id in available_quests:
-		active_quests[quest_id] = available_quests[quest_id]
-		available_quests.erase(quest_id)
-		emit_signal("quest_started", quest_id)
-		emit_signal("quest_updated", quest_id, active_quests[quest_id].get_current_objective())
-
-func update(quest_id):
-	if quest_id in active_quests:
-		var quest = active_quests[quest_id]
-		var is_complete = quest.advance_objective()
-		if is_complete:
-			complete(quest_id)
-		else:
+		if quest_id not in GameState.world_state.completed_quests:
+			GameState.world_state.active_quests.append(quest_id)
+			emit_signal("quest_started", quest_id)
 			emit_signal("quest_updated", quest_id, quest.get_current_objective())
 
-func complete(quest_id):
-	if quest_id in active_quests:
-		completed_quests[quest_id] = active_quests[quest_id]
-		active_quests.erase(quest_id)
-		SaveManager.update_quest_state(quest_id, true)
+func complete_quest(quest_id: String):
+	if quest_id in GameState.world_state.active_quests:
+		GameState.world_state.active_quests.erase(quest_id)
+		GameState.world_state.completed_quests.append(quest_id)
+		
+		# Get quest data and apply rewards
+		var quest_data = QuestDatabase.get_quest(quest_id)
+		if quest_data and quest_data.reward:
+			if quest_data.reward.has("experience"):
+				GameState.player_data.xp += quest_data.reward.experience
+				GameState.emit_resource_signal("xp_changed", GameState.player_data.xp)
+			
+			if quest_data.reward.has("gold"):
+				GameState.player_data.coins += quest_data.reward.gold
+				GameState.emit_resource_signal("coins_changed", GameState.player_data.coins)
+		
 		emit_signal("quest_completed", quest_id)
 
-func fail(quest_id):
-	if quest_id in active_quests:
-		available_quests[quest_id] = active_quests[quest_id]
-		active_quests.erase(quest_id)
+func is_quest_active(quest_id: String) -> bool:
+	return quest_id in GameState.world_state.active_quests
+
+func is_quest_completed(quest_id: String) -> bool:
+	return quest_id in GameState.world_state.completed_quests

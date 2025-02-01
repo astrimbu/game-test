@@ -34,6 +34,9 @@ var is_dead = false
 @export var dropped_item_scene: PackedScene = preload("res://scenes/DroppedItem.tscn")
 @onready var movement_controller: EnemyMovementController = $MovementController
 
+# Add a new resource type for enemy configuration
+@export var enemy_config: Resource
+
 signal enemy_died(enemy: Enemy)
 signal enemy_respawned(enemy: Enemy)
 
@@ -79,20 +82,23 @@ func _physics_process(delta):
 	
 	move_and_slide()
 
-func hit(attack_position: Vector2):
+func take_damage(amount: int) -> void:
 	if is_dead:
 		return
 		
-	movement_controller.stop_movement()  # Stop movement when hit
-	is_being_hit = true
-	knockback_timer = KNOCKBACK_DURATION
-	knockback_direction = (global_position - attack_position).normalized()
-	
-	# Apply damage
-	current_health -= damage_per_hit
+	current_health -= amount
 	health_bar.value = current_health
 	
-	# Check for death
+	# Start knockback/hit animation
+	is_being_hit = true
+	knockback_timer = KNOCKBACK_DURATION
+	
+	# Get knockback direction from player
+	var player = get_node("../Player")  # Adjust path if needed
+	if player:
+		knockback_direction = (global_position - player.global_position).normalized()
+	
+	# Check if enemy died from this hit
 	if current_health <= 0:
 		die()
 
@@ -105,9 +111,10 @@ func die() -> void:
 		animation_player.play("die")
 		await animation_player.animation_finished
 	
-	# Grant XP to player
+	# Update player state through GameState
 	if xp_value > 0:
-		player.resources.add_xp(xp_value)
+		GameState.player_data.xp += xp_value
+		GameState.emit_resource_signal("xp_changed", GameState.player_data.xp)
 	
 	# Drop coins as physical items
 	if coin_value > 0:
@@ -137,7 +144,8 @@ func die() -> void:
 
 func _on_item_collected(item_data: Dictionary):
 	if item_data.type == "coin":
-		player.resources.add_coins(item_data.value)
+		GameState.player_data.coins += item_data.value
+		GameState.emit_resource_signal("coins_changed", GameState.player_data.coins)
 
 func respawn():
 	# Reset position and state

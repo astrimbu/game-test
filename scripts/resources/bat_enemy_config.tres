@@ -1,0 +1,11 @@
+[gd_resource type="Resource" script_class="EnemyConfig" load_steps=2 format=3 uid="uid://5j6yibhtbwnq"]
+
+[ext_resource type="Script" path="res://scripts/resources/enemy_config.gd" id="1_fg0he"]
+
+[resource]
+script = ExtResource("1_fg0he")
+max_health = 3
+damage_per_hit = 1
+xp_value = 1
+coin_value = 1
+indicator_offset = 64.0

@@ -11,8 +11,15 @@ signal dropped_through_platform
 @export var character: CharacterBody2D
 
 var gravity: float = ProjectSettings.get_setting("physics/2d/default_gravity")
-var facing_direction := 1
-var can_drop_through := true
+var facing_direction: float = 1
+var can_drop_through: bool = true
+var drop_timer: Timer
+
+func _ready() -> void:
+	drop_timer = Timer.new()
+	drop_timer.one_shot = true
+	add_child(drop_timer)
+	drop_timer.timeout.connect(_on_drop_timer_timeout)
 
 func _physics_process(delta: float) -> void:
 	apply_gravity(delta)
@@ -24,19 +31,27 @@ func apply_gravity(delta: float) -> void:
 
 func jump() -> void:
 	if character.is_on_floor() and has_platform_above():
-		character.velocity.y = config.JUMP_VELOCITY
+		character.velocity.y = config.get_modified_jump()
 		jumped.emit()
 
 func move(direction: float) -> void:
 	if direction != 0:
+		# Use acceleration for smoother movement
+		character.velocity.x = move_toward(
+			character.velocity.x,
+			direction * config.get_modified_speed(),
+			config.ACCELERATION * get_physics_process_delta_time()
+		)
 		set_facing_direction(direction)
-		if will_fall_off_edge(direction):
-			character.velocity.x = 0
-		else:
-			character.velocity.x = direction * config.SPEED
-			started_moving.emit()
+		started_moving.emit()
 	else:
-		character.velocity.x = 0
+		# Apply friction when not moving
+		var friction = config.FRICTION if character.is_on_floor() else config.AIR_RESISTANCE
+		character.velocity.x = move_toward(
+			character.velocity.x,
+			0,
+			friction * get_physics_process_delta_time()
+		)
 		stopped_moving.emit()
 
 func drop_through_platform() -> void:
@@ -101,3 +116,6 @@ func set_facing_direction(direction: float) -> void:
 	if direction != facing_direction:
 		facing_direction *= -1
 		character.scale.x *= -1
+
+func _on_drop_timer_timeout() -> void:
+	can_drop_through = true

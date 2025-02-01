@@ -13,7 +13,7 @@ var states: Dictionary = {}
 @onready var sprite: Sprite2D = $Sprite2D
 @onready var animation_player: AnimationPlayer = $AnimationPlayer
 @onready var target_indicator = $"../TargetIndicator"
-@onready var resources = PlayerResources.new()
+@onready var resources: PlayerResources = $Resources
 
 # Forward some commonly accessed properties to keep state code cleaner
 var gravity: float = ProjectSettings.get_setting("physics/2d/default_gravity")
@@ -36,7 +36,6 @@ var can_drop_through: bool:
 
 func _ready():
 	add_to_group("player")
-	add_child(resources)
 	
 	# Ensure components are properly initialized with config
 	movement.character = self

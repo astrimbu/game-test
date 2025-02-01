@@ -18,18 +18,22 @@ var game_state = {
 func _ready():
 	load_game()
 
-func save_game():
+func save_game() -> void:
 	var file = FileAccess.open(SAVE_FILE, FileAccess.WRITE)
 	if file:
-		file.store_var(game_state)
+		var save_data = GameState.to_dict()
+		file.store_var(save_data)
 		file.close()
 
-func load_game():
+func load_game() -> void:
 	if FileAccess.file_exists(SAVE_FILE):
 		var file = FileAccess.open(SAVE_FILE, FileAccess.READ)
 		if file:
-			game_state = file.get_var()
+			var save_data = file.get_var()
+			GameState.from_dict(save_data)
 			file.close()
+	else:
+		GameState.reset_state()
 
 func update_quest_state(quest_id: String, completed: bool):
 	if completed:

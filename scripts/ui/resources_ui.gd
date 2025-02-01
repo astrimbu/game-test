@@ -1,55 +1,45 @@
 extends MarginContainer
 
-@onready var xp_fill = $VBoxContainer/HBoxContainer/XPContainer/Background/Fill
-@onready var xp_label = $VBoxContainer/HBoxContainer/XPContainer/XPLabel
-@onready var coins_label = $VBoxContainer/HBoxContainer/CoinsContainer/CoinsLabel
 @onready var level_label = $VBoxContainer/HBoxContainer/LevelLabel
-@onready var player = get_tree().get_first_node_in_group("player")
+@onready var xp_label = $VBoxContainer/HBoxContainer/XPContainer/XPLabel
+@onready var xp_fill = $VBoxContainer/HBoxContainer/XPContainer/Background/Fill
+@onready var coins_label = $VBoxContainer/HBoxContainer/CoinsContainer/CoinsLabel
 
-var max_xp: int = 10  # Base XP needed for first level
-var total_xp: int = 0  # Track total XP earned
-var level_progress: int = 0  # Track XP progress toward next level
 var current_level: int = 1
+var level_progress: int = 0
+var max_xp: int = 10
 
 func _ready() -> void:
-	if player:
-		player.resources.xp_changed.connect(_on_xp_changed)
-		player.resources.coins_changed.connect(_on_coins_changed)
-		player.resources.level_up.connect(_on_level_up)
-		_update_xp_bar()
+	# Get initial state
+	current_level = GameState.player_data.level
+	level_progress = GameState.player_data.xp
+	max_xp = current_level * 100
+	
+	# Update UI with initial state
+	level_label.text = "Lvl: %d" % current_level
+	_update_xp_bar()
+	coins_label.text = str(GameState.player_data.coins)
+	
+	# Connect to resource signals
+	var resources = get_node("../Player/Resources")  # Adjust path as needed
+	resources.xp_changed.connect(_on_xp_changed)
+	resources.coins_changed.connect(_on_coins_changed)
+	resources.level_up.connect(_on_level_up)
 
-func _on_xp_changed(xp_gained: int) -> void:
-	print("XP gained: %d" % xp_gained)
-	print("Total XP: %d" % total_xp)
-	print("Level progress: %d" % level_progress)
-	total_xp += xp_gained
-	level_progress += xp_gained
-	
-	# Check for level up
-	if level_progress >= max_xp:
-		_level_up()
-	
+func _on_xp_changed(new_xp: int) -> void:
+	level_progress = new_xp
 	_update_xp_bar()
 
-func _level_up() -> void:
-	current_level += 1
-	# Reset progress toward next level
-	level_progress = 0
-	# Increase XP required for next level
-	max_xp = 10 * current_level
-	# Update level display
-	level_label.text = "Lvl: %d" % current_level
-
-func _update_xp_bar() -> void:
-	# Calculate fill amount (0.0 to 1.0)
-	var fill_amount = float(level_progress) / max_xp
-	# Update the fill sprite's scale
-	xp_fill.scale.x = fill_amount
-	# Update the XP label
-	xp_label.text = "%d/%d XP" % [level_progress, max_xp]
-
 func _on_coins_changed(new_coins: int) -> void:
-	coins_label.text = "%d" % new_coins
+	coins_label.text = str(new_coins)
 
 func _on_level_up(new_level: int) -> void:
-	level_label.text = "Lvl: %d" % new_level
+	current_level = new_level
+	max_xp = current_level * 100
+	level_label.text = "Lvl: %d" % current_level
+	_update_xp_bar()
+
+func _update_xp_bar() -> void:
+	var fill_amount = float(level_progress) / max_xp
+	xp_fill.scale.x = fill_amount
+	xp_label.text = "%d/%d XP" % [level_progress, max_xp]
