@@ -1,0 +1,22 @@
+[gd_scene load_steps=3 format=3 uid="uid://cxwfkmvcel505"]
+
+[ext_resource type="Script" path="res://scripts/ui/inventory_ui.gd" id="1_50v1b"]
+[ext_resource type="PackedScene" uid="uid://dsapphpw25k1h" path="res://scenes/ui/InventorySlotUI.tscn" id="2_51yxl"]
+
+[node name="InventoryUI" type="Control" node_paths=PackedStringArray("grid_container")]
+layout_mode = 3
+anchors_preset = 0
+script = ExtResource("1_50v1b")
+slot_scene = ExtResource("2_51yxl")
+grid_container = NodePath("Slots")
+
+[node name="Background" type="Panel" parent="."]
+layout_mode = 0
+offset_right = 40.0
+offset_bottom = 40.0
+
+[node name="Slots" type="GridContainer" parent="."]
+layout_mode = 0
+offset_right = 40.0
+offset_bottom = 40.0
+columns = 5

@@ -1,0 +1,24 @@
+[gd_scene load_steps=4 format=3 uid="uid://ctnspd1ddsbph"]
+
+[ext_resource type="PackedScene" uid="uid://ckb71rvixf3ol" path="res://scenes/ui/ResourcesUI.tscn" id="1_i6yt8"]
+[ext_resource type="Script" path="res://scripts/ui/ui.gd" id="1_reuxq"]
+[ext_resource type="PackedScene" uid="uid://cxwfkmvcel505" path="res://scenes/ui/InventoryUI.tscn" id="2_vn64w"]
+
+[node name="UI" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+script = ExtResource("1_reuxq")
+
+[node name="ResourcesUI" parent="." instance=ExtResource("1_i6yt8")]
+layout_mode = 0
+offset_left = 64.0
+offset_top = 544.0
+offset_right = 260.0
+offset_bottom = 584.0
+
+[node name="InventoryUI" parent="." instance=ExtResource("2_vn64w")]

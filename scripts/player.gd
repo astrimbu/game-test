@@ -70,10 +70,10 @@ func _connect_component_signals() -> void:
 			animation_player.play("idle")
 	)
 	
-	# Combat signals
-	combat.started_shooting.connect(func(): animation_player.play("shoot"))
-	combat.stopped_shooting.connect(func(): animation_player.play("idle"))
-	combat.killed_enemy.connect(func(enemy): 
+	# Combat signals - use EventBus now
+	EventBus.combat_animation_started.connect(func(anim_name: String): animation_player.play(anim_name))
+	EventBus.combat_animation_ended.connect(func(anim_name: String): animation_player.play("idle"))
+	EventBus.enemy_killed.connect(func(enemy): 
 		interaction.clear_targets()
 		set_state("idle")
 	)

@@ -1,0 +1,16 @@
+[gd_scene load_steps=2 format=3 uid="uid://dsapphpw25k1h"]
+
+[ext_resource type="Script" path="res://scripts/ui/inventory_slot_ui.gd" id="1_xpirq"]
+
+[node name="InventorySlotUI" type="Panel"]
+script = ExtResource("1_xpirq")
+
+[node name="ItemIcon" type="TextureRect" parent="."]
+layout_mode = 0
+offset_right = 40.0
+offset_bottom = 40.0
+
+[node name="QuantityLabel" type="Label" parent="."]
+layout_mode = 0
+offset_right = 40.0
+offset_bottom = 18.0

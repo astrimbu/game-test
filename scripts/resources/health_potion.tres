@@ -1,0 +1,20 @@
+[gd_resource type="Resource" script_class="ItemData" load_steps=3 format=3 uid="uid://btr3qnikjt0f8"]
+
+[ext_resource type="Texture2D" uid="uid://gj1kv6y5qxkj" path="res://assets/items/potion-red.png" id="1_auh3p"]
+[ext_resource type="Script" path="res://scripts/resources/item_data.gd" id="1_h526i"]
+
+[resource]
+script = ExtResource("1_h526i")
+id = "health_potion"
+name = "Health Potion"
+description = "Restores some health"
+type = 0
+rarity = 0
+icon = ExtResource("1_auh3p")
+stackable = true
+max_stack = 5
+equip_slot = ""
+stats = {}
+use_effect = {
+"health": 20
+}

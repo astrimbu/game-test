@@ -24,7 +24,7 @@ func _physics_process(_delta: float) -> void:
 	# Update target indicator position if we're targeting an enemy
 	if character.combat and character.combat.target_enemy and target_indicator:
 		var enemy = character.combat.target_enemy
-		if not enemy.is_dead:
+		if is_instance_valid(enemy) and not enemy.get_is_dead():
 			_update_target_indicator(enemy.global_position - Vector2(0, enemy.indicator_offset))
 
 func handle_mouse_down(clicked_pos: Vector2) -> void:

@@ -122,9 +122,14 @@ _data = {
 collision_layer = 4
 script = ExtResource("1_4rhy8")
 max_health = 3
+damage_per_hit = null
+xp_value = null
+coin_value = null
+indicator_offset = null
 sprite_path = NodePath("Sprite2D")
 animation_player_path = NodePath("AnimationPlayer")
 health_bar_path = NodePath("HealthBar")
+dropped_item_scene = null
 
 [node name="Sprite2D" type="Sprite2D" parent="."]
 position = Vector2(0, -48)

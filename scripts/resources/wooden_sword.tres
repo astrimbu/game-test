@@ -1,0 +1,20 @@
+[gd_resource type="Resource" script_class="ItemData" load_steps=3 format=3 uid="uid://dn8kisnmtou3s"]
+
+[ext_resource type="Script" path="res://scripts/resources/item_data.gd" id="1_ep3fh"]
+[ext_resource type="Texture2D" uid="uid://dj3qqvvgi3k4m" path="res://assets/items/wooden-sword.png" id="1_jwk33"]
+
+[resource]
+script = ExtResource("1_ep3fh")
+id = "wooden_sword"
+name = "Wooden Sword"
+description = "A basic training sword"
+type = 1
+rarity = 0
+icon = ExtResource("1_jwk33")
+stackable = false
+max_stack = 1
+equip_slot = "weapon"
+stats = {
+"damage": 2
+}
+use_effect = {}

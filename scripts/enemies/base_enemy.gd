@@ -1,8 +1,8 @@
+class_name BaseEnemy
 extends CharacterBody2D
-class_name Enemy
 
-const KNOCKBACK_FORCE = 20
-const KNOCKBACK_DURATION = 0.3
+const KNOCKBACK_FORCE = 200.0
+const KNOCKBACK_DURATION = 0.2
 const RESPAWN_DELAY = 3.0
 
 # Make these configurable per enemy type
@@ -37,8 +37,9 @@ var is_dead = false
 # Add a new resource type for enemy configuration
 @export var enemy_config: Resource
 
-signal enemy_died(enemy: Enemy)
-signal enemy_respawned(enemy: Enemy)
+@export var enemy_type: String = "bat"  # Used for respawning
+@export var should_respawn: bool = true
+var spawn_position: Vector2
 
 func _ready():
 	# Validate required nodes
@@ -46,6 +47,7 @@ func _ready():
 	assert(animation_player != null, "AnimationPlayer node not found at specified path")
 	assert(health_bar != null, "HealthBar node not found at specified path")
 	
+	spawn_position = global_position  # Store initial spawn position
 	current_health = max_health
 	setup_health_bar()
 	_init_enemy()
@@ -98,49 +100,43 @@ func take_damage(amount: int) -> void:
 	if player:
 		knockback_direction = (global_position - player.global_position).normalized()
 	
+	# Apply status effect (stunned during knockback)
+	EventBus.publish_status_effect(self, "stunned", KNOCKBACK_DURATION)
+	
 	# Check if enemy died from this hit
 	if current_health <= 0:
 		die()
+	else:
+		EventBus.enemy_hit.emit(self)
 
 func die() -> void:
+	if is_dead:
+		return
+		
 	is_dead = true
 	velocity = Vector2.ZERO
 	
-	# Play death animation if it exists
+	# Store respawn info before freeing
+	var type = enemy_type
+	var pos = spawn_position
+	var should_spawn = should_respawn
+	
+	# Update player resources through EventBus
+	EventBus.publish_xp_gained(xp_value)
+	EventBus.coins_gained.emit(coin_value)
+	
 	if animation_player.has_animation("die"):
 		animation_player.play("die")
 		await animation_player.animation_finished
 	
-	# Update player state through GameState
-	if xp_value > 0:
-		GameState.player_data.xp += xp_value
-		GameState.emit_resource_signal("xp_changed", GameState.player_data.xp)
+	EventBus.publish_enemy_killed(self)
 	
-	# Drop coins as physical items
-	if coin_value > 0:
-		var dropped_item = dropped_item_scene.instantiate()
-		get_parent().add_child(dropped_item)
-		dropped_item.initialize({
-			"type": "coin",
-			"value": coin_value
-		}, global_position)
-		dropped_item.collected.connect(_on_item_collected)
+	# Request respawn before freeing if needed
+	if should_spawn:
+		await get_tree().create_timer(RESPAWN_DELAY).timeout
+		EventBus.request_enemy_spawn(type, pos)
 	
-	# Store references before removing from scene
-	var parent = get_parent()
-	var tree = get_tree()
-	
-	# Emit signal and remove from scene
-	enemy_died.emit(self)
-	parent.remove_child(self)
-	
-	# Create timer while we still have tree access
-	var timer = tree.create_timer(RESPAWN_DELAY)
-	await timer.timeout
-	
-	# Add back to scene tree and respawn
-	parent.add_child(self)
-	respawn()
+	queue_free()
 
 func _on_item_collected(item_data: Dictionary):
 	if item_data.type == "coin":
@@ -165,6 +161,6 @@ func respawn():
 	
 	# Reset movement controller
 	movement_controller.reset_movement()
-	
-	# Emit respawn signal
-	enemy_respawned.emit(self)
+
+func get_is_dead() -> bool:
+	return is_dead

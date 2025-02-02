@@ -4,7 +4,7 @@
 [ext_resource type="Texture2D" uid="uid://bd0bjwlih86fv" path="res://assets/XPBar.png" id="1_ug1vw"]
 [ext_resource type="Texture2D" uid="uid://bhh3cl7lryrwh" path="res://assets/XPBarFill.png" id="2_d4abv"]
 
-[node name="ResourcesUi" type="MarginContainer"]
+[node name="ResourcesUI" type="MarginContainer"]
 top_level = true
 
 [node name="VBoxContainer" type="VBoxContainer" parent="."]
