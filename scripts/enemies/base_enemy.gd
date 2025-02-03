@@ -142,12 +142,28 @@ func die() -> void:
 func spawn_dropped_items() -> void:
 	# Spawn coin
 	if coin_value > 0:
-		var dropped_item = dropped_item_scene.instantiate()
-		get_parent().add_child(dropped_item)
-		dropped_item.initialize({
+		spawn_world_item({
 			"type": "coin",
 			"value": coin_value
-		}, global_position)
+		})
+	
+	# Random chance to drop an inventory item
+	if randf() < 1:
+		var item = get_random_drop()
+		if item:
+			spawn_world_item({
+				"type": "inventory_item",
+				"item": item
+			})
+
+func spawn_world_item(item_data: Dictionary) -> void:
+	var dropped_item = dropped_item_scene.instantiate()
+	get_parent().add_child(dropped_item)
+	dropped_item.initialize(item_data, global_position)
+
+func get_random_drop() -> ItemData:
+	# For now, just return the wooden sword
+	return preload("res://scripts/resources/wooden_sword.tres")
 
 func _on_item_collected(item_data: Dictionary):
 	if item_data.type == "coin":

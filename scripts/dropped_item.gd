@@ -11,6 +11,8 @@ var drop_height: float = -50.0
 var drop_duration: float = 0.75
 var time_elapsed: float = 0.0
 
+var dropped_item_scene = preload("res://scenes/DroppedItem.tscn")
+
 func _ready():
 	# Set collision layer to Layer 5 (Items)
 	collision_layer = 0b10000  # Layer 5
@@ -25,10 +27,15 @@ func initialize(data: Dictionary, pos: Vector2):
 	target_position = pos
 	
 	# Set sprite based on item type
-	if item_data.type == "coin":
-		sprite.texture = preload("res://assets/coin.png")
-		sprite.hframes = 6  # Adjust this to match your spritesheet
-		animation_player.play("spin")
+	match item_data.type:
+		"coin":
+			sprite.texture = preload("res://assets/coin.png")
+			sprite.hframes = 6
+			animation_player.play("spin")
+		"inventory_item":
+			var item: ItemData = item_data.item
+			sprite.texture = item.icon
+			sprite.hframes = 1
 
 func _physics_process(delta):
 	time_elapsed += delta
@@ -44,7 +51,13 @@ func _on_input_event(_viewport, event: InputEvent, _shape_idx):
 func collect():
 	print("Collecting item:", item_data)
 	EventBus.publish_item_collected(item_data)
-	if item_data.type == "coin":
-		print("Publishing coin gain:", item_data.value)
-		EventBus.publish_coins_gained(item_data.value)
+	
+	match item_data.type:
+		"coin":
+			print("Publishing coin gain:", item_data.value)
+			EventBus.publish_coins_gained(item_data.value)
+		"inventory_item":
+			print("Publishing inventory item collection:", item_data.item.name)
+			EventBus.publish_inventory_item_collected(item_data.item)
+	
 	queue_free()

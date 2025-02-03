@@ -80,7 +80,7 @@ func get_total_damage() -> int:
 	
 	# Add weapon damage if equipped
 	var weapon = GameState.player_data.equipment.get("weapon")
-	if weapon and weapon.stats.has("damage"):
+	if weapon and weapon is ItemData and weapon.stats.has("damage"):
 		base += weapon.stats.damage
 	
 	return base

@@ -7,15 +7,15 @@ extends Resource
 func can_add_item(new_item: ItemData, amount_to_add: int) -> bool:
 	if item == null:
 		return true
-	return item == new_item and amount + amount_to_add <= item.max_stack_size
+	return item == new_item and amount + amount_to_add <= new_item.max_stack
 
 func add_item(new_item: ItemData, amount_to_add: int) -> int:
 	if item == null:
 		item = new_item
-		amount = min(amount_to_add, new_item.max_stack_size)
+		amount = min(amount_to_add, new_item.max_stack)
 		return amount_to_add - amount
 	elif item == new_item:
-		var space_left = item.max_stack_size - amount
+		var space_left = item.max_stack - amount
 		var amount_added = min(amount_to_add, space_left)
 		amount += amount_added
 		return amount_to_add - amount_added

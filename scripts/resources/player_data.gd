@@ -18,15 +18,17 @@ func _init():
 		inventory.append(InventorySlot.new())
 
 func add_item(item: ItemData, amount: int = 1) -> int:
-	# First try to stack with existing items
 	var remaining = amount
-	for slot in inventory:
-		if remaining <= 0:
-			break
-		if slot.can_add_item(item, remaining):
-			remaining = slot.add_item(item, remaining)
 	
-	# Then try empty slots
+	# First try to stack with existing items (if stackable)
+	if item.stackable:
+		for slot in inventory:
+			if remaining <= 0:
+				break
+			if slot.can_add_item(item, remaining):
+				remaining = slot.add_item(item, remaining)
+	
+	# Then try empty slots for remaining items
 	if remaining > 0:
 		for slot in inventory:
 			if remaining <= 0:
@@ -46,22 +48,49 @@ func equip_item(item: ItemData) -> ItemData:
 		return null
 		
 	var previous_item = equipment.get(item.equip_slot)
+	# Make sure we're returning a proper ItemData resource
+	if previous_item is String:
+		# If it's a path string, load the resource
+		previous_item = load(previous_item) as ItemData
+	elif not previous_item is ItemData:
+		# If it's not a valid item, return null
+		previous_item = null
+		
 	equipment[item.equip_slot] = item
 	return previous_item
 
 func unequip_item(slot: String) -> ItemData:
 	var previous_item = equipment.get(slot)
+	# Make sure we're returning a proper ItemData resource
+	if previous_item is String:
+		previous_item = load(previous_item) as ItemData
+	elif not previous_item is ItemData:
+		previous_item = null
+		
 	equipment.erase(slot)
-	return previous_item  # Return the item that was unequipped, or null if nothing was equipped
+	return previous_item
 
 # Save/load methods
 func to_dict() -> Dictionary:
+	var inventory_data = []
+	for slot in inventory:
+		if slot.item:
+			inventory_data.append(slot.to_dict())
+		else:
+			inventory_data.append(null)
+			
+	var equipment_data = {}
+	for slot_name in equipment:
+		var item = equipment[slot_name]
+		if item is ItemData:
+			equipment_data[slot_name] = item.resource_path
+			
 	return {
 		"level": level,
 		"xp": xp,
 		"coins": coins,
-		"inventory": inventory,
-		"equipment": equipment,
+		"inventory": inventory_data,
+		"equipment": equipment_data,
 	}
 
 func from_dict(data: Dictionary) -> void:

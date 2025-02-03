@@ -12,11 +12,15 @@ grid_container = NodePath("Slots")
 
 [node name="Background" type="Panel" parent="."]
 layout_mode = 0
-offset_right = 40.0
-offset_bottom = 40.0
+offset_right = 300.0
+offset_bottom = 200.0
 
 [node name="Slots" type="GridContainer" parent="."]
 layout_mode = 0
-offset_right = 40.0
-offset_bottom = 40.0
+offset_left = 8.0
+offset_top = 8.0
+offset_right = 288.0
+offset_bottom = 188.0
+theme_override_constants/h_separation = 4
+theme_override_constants/v_separation = 4
 columns = 5

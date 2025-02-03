@@ -27,7 +27,7 @@ signal quest_completed(quest_id: String)
 # Additional combat signals
 signal combat_started
 signal combat_ended
-signal player_hit  # For when the player takes damage
+signal player_hit
 signal player_died
 
 # New combat signals
@@ -55,6 +55,9 @@ signal auto_combat_ended
 signal target_acquired(target: CharacterBody2D)
 signal target_lost
 
+# Dev tool signals
+signal game_state_reset
+
 # Helper functions to emit signals and handle side effects
 func publish_enemy_hit(enemy: CharacterBody2D) -> void:
 	enemy_hit.emit(enemy)
@@ -72,18 +75,13 @@ func publish_equipment_changed(slot: String, item: ItemData) -> void:
 	SaveManager.save_game()
 
 func publish_xp_gained(amount: int) -> void:
-	xp_gained.emit(amount)
-	# Update GameState
 	GameState.player_data.xp += amount
+	xp_gained.emit(amount)
 	SaveManager.save_game()
 
 func publish_coins_gained(amount: int) -> void:
-	print("EventBus: Before coins update:", GameState.player_data.coins)
-	# Update GameState first
 	GameState.player_data.coins += amount
-	# Then emit the signal
 	coins_gained.emit(amount)
-	print("EventBus: After coins update:", GameState.player_data.coins)
 	SaveManager.save_game()
 
 func publish_player_hit(damage: int) -> void:
@@ -163,3 +161,47 @@ func publish_target_lost() -> void:
 
 func publish_item_collected(item_data: Dictionary) -> void:
 	item_collected.emit(item_data)
+
+func publish_inventory_item_collected(item: ItemData) -> void:
+	print("EventBus: Adding item to inventory:", item.name)
+	# Try to add to inventory
+	var remaining = GameState.player_data.add_item(item)
+	if remaining == 0:
+		# Item was fully added to inventory
+		print("EventBus: Item added successfully")
+		item_picked_up.emit(item)
+		# Make sure UI updates
+		if get_tree().root.has_node("UI"):
+			var ui = get_tree().root.get_node("UI")
+			ui.refresh_ui()
+		SaveManager.save_game()
+	else:
+		print("EventBus: Inventory full!")
+
+func reset_game_state() -> void:
+	print("EventBus: Resetting game state")
+	
+	# Create fresh PlayerData
+	GameState.player_data = PlayerData.new()
+	
+	# Delete save file
+	var dir = DirAccess.open("user://")
+	if dir and dir.file_exists("save.json"):
+		dir.remove("save.json")
+	
+	# Force UI refresh
+	if get_tree().root.has_node("UI"):
+		var ui = get_tree().root.get_node("UI")
+		ui.refresh_ui()
+	
+	# Emit signals to update all listeners
+	coins_gained.emit(0)  # Force ResourcesUI to update
+	xp_gained.emit(0)     # Force ResourcesUI to update
+	level_up.emit(1)      # Reset level display
+	game_state_reset.emit()
+	
+	print("EventBus: Game state reset complete")
+
+func _input(event: InputEvent) -> void:
+	if OS.is_debug_build() and event.is_action_pressed("debug_reset"):
+		reset_game_state()

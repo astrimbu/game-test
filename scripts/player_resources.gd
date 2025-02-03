@@ -6,7 +6,7 @@ func _ready() -> void:
 	# Connect to EventBus signals
 	EventBus.xp_gained.connect(_on_xp_gained)
 
-func _on_xp_gained() -> void:
+func _on_xp_gained(_amount: int) -> void:
 	check_level_up()
 
 func check_level_up() -> void:
