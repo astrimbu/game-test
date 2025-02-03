@@ -1,8 +1,6 @@
 extends Area2D
 class_name DroppedItem
 
-signal collected(item_data: Dictionary)
-
 @onready var sprite = $Sprite2D
 @onready var animation_player = $AnimationPlayer
 
@@ -44,5 +42,9 @@ func _on_input_event(_viewport, event: InputEvent, _shape_idx):
 	pass
 
 func collect():
-	collected.emit(item_data)
+	print("Collecting item:", item_data)
+	EventBus.publish_item_collected(item_data)
+	if item_data.type == "coin":
+		print("Publishing coin gain:", item_data.value)
+		EventBus.publish_coins_gained(item_data.value)
 	queue_free()

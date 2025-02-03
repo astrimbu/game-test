@@ -1,11 +1,13 @@
-[gd_scene load_steps=4 format=3 uid="uid://ckb71rvixf3ol"]
+[gd_scene load_steps=5 format=3 uid="uid://ckb71rvixf3ol"]
 
 [ext_resource type="Texture2D" uid="uid://b4axpw0vdvooe" path="res://assets/Coins.png" id="1_2n26u"]
+[ext_resource type="Script" path="res://scripts/ui/resources_ui.gd" id="1_bwcks"]
 [ext_resource type="Texture2D" uid="uid://bd0bjwlih86fv" path="res://assets/XPBar.png" id="1_ug1vw"]
 [ext_resource type="Texture2D" uid="uid://bhh3cl7lryrwh" path="res://assets/XPBarFill.png" id="2_d4abv"]
 
 [node name="ResourcesUI" type="MarginContainer"]
 top_level = true
+script = ExtResource("1_bwcks")
 
 [node name="VBoxContainer" type="VBoxContainer" parent="."]
 layout_mode = 2

@@ -20,17 +20,21 @@ func _ready() -> void:
 	_update_xp_bar()
 	coins_label.text = str(GameState.player_data.coins)
 	
-	# Connect to EventBus signals instead of direct node signals
-	EventBus.xp_gained.connect(_on_xp_changed)
+	# Add debug print to verify connection
+	print("ResourcesUI connecting to EventBus signals")
+	
+	# Connect to EventBus signals
 	EventBus.coins_gained.connect(_on_coins_changed)
+	EventBus.xp_gained.connect(_on_xp_changed)
 	EventBus.level_up.connect(_on_level_up)
 
 func _on_xp_changed(_amount: int) -> void:
 	level_progress = GameState.player_data.xp  # Get the total XP from GameState
 	_update_xp_bar()
 
-func _on_coins_changed(new_coins: int) -> void:
-	coins_label.text = str(new_coins)
+func _on_coins_changed(_new_coins: int) -> void:
+	print("ResourcesUI: GameState coins value:", GameState.player_data.coins)
+	coins_label.text = str(GameState.player_data.coins)
 
 func _on_level_up(new_level: int) -> void:
 	current_level = new_level

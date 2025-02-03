@@ -5,7 +5,8 @@ signal enemy_hit(enemy: CharacterBody2D)
 signal enemy_killed(enemy: CharacterBody2D)
 
 # Item signals
-signal item_picked_up(item: ItemData)
+signal item_collected(item_data: Dictionary)  # coins
+signal item_picked_up(item: ItemData)  # inventory items
 signal item_dropped(item: ItemData)
 signal equipment_changed(slot: String, item: ItemData)
 
@@ -72,6 +73,17 @@ func publish_equipment_changed(slot: String, item: ItemData) -> void:
 
 func publish_xp_gained(amount: int) -> void:
 	xp_gained.emit(amount)
+	# Update GameState
+	GameState.player_data.xp += amount
+	SaveManager.save_game()
+
+func publish_coins_gained(amount: int) -> void:
+	print("EventBus: Before coins update:", GameState.player_data.coins)
+	# Update GameState first
+	GameState.player_data.coins += amount
+	# Then emit the signal
+	coins_gained.emit(amount)
+	print("EventBus: After coins update:", GameState.player_data.coins)
 	SaveManager.save_game()
 
 func publish_player_hit(damage: int) -> void:
@@ -148,3 +160,6 @@ func publish_target_acquired(target: CharacterBody2D) -> void:
 
 func publish_target_lost() -> void:
 	target_lost.emit()
+
+func publish_item_collected(item_data: Dictionary) -> void:
+	item_collected.emit(item_data)

@@ -116,9 +116,6 @@ func die() -> void:
 	is_dead = true
 	velocity = Vector2.ZERO
 	
-	# Clear any player targeting this enemy
-	EventBus.publish_enemy_killed(self)
-	
 	# Store respawn info before freeing
 	var type = enemy_type
 	var pos = spawn_position
@@ -126,7 +123,10 @@ func die() -> void:
 	
 	# Update player resources through EventBus
 	EventBus.publish_xp_gained(xp_value)
-	EventBus.coins_gained.emit(coin_value)
+	EventBus.publish_enemy_killed(self)
+	
+	# Spawn dropped items
+	spawn_dropped_items()
 	
 	if animation_player.has_animation("die"):
 		animation_player.play("die")
@@ -138,6 +138,16 @@ func die() -> void:
 		EventBus.request_enemy_spawn(type, pos)
 	
 	queue_free()
+
+func spawn_dropped_items() -> void:
+	# Spawn coin
+	if coin_value > 0:
+		var dropped_item = dropped_item_scene.instantiate()
+		get_parent().add_child(dropped_item)
+		dropped_item.initialize({
+			"type": "coin",
+			"value": coin_value
+		}, global_position)
 
 func _on_item_collected(item_data: Dictionary):
 	if item_data.type == "coin":
