@@ -2,6 +2,10 @@ class_name MovingToTargetState
 extends PlayerState
 
 func enter_state(player: CharacterBody2D) -> void:
+	# Clear enemy target when entering moving state
+	if not player.target_enemy or player.target_enemy.get_is_dead():
+		player.combat.target_enemy = null
+	
 	if not player.is_shooting:
 		player.animation_player.play("walk")
 
@@ -45,7 +49,10 @@ func update_state(player: CharacterBody2D, delta: float) -> void:
 		player.movement.move(0)
 		if player.is_on_floor():
 			if player.target_enemy and not player.target_enemy.is_dead:
-				player.set_state("shooting")
+				var distance = player.global_position.distance_to(player.target_position)
+				if distance <= 50:  # Attack range
+					player.set_state("shooting")
+					return
 			elif player.target_npc and player.target_npc.can_interact:
 				player.target_npc.start_interaction()
 				player.interaction.clear_targets()

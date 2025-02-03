@@ -2,8 +2,8 @@ class_name ShootingState
 extends PlayerState
 
 func enter_state(player: CharacterBody2D) -> void:
-	if not player.is_shooting:
-		player.shoot(player.target_enemy != null)
+	if player.target_enemy and not player.target_enemy.get_is_dead():
+		player.combat.start_auto_combat(player.target_enemy)
 
 func update_state(player: CharacterBody2D, delta: float) -> void:
 	apply_gravity(player, delta)
@@ -13,11 +13,10 @@ func update_state(player: CharacterBody2D, delta: float) -> void:
 	
 	player.move_and_slide()
 	
-	# Return to idle if shooting is done and no auto-target
-	if not player.is_shooting and not player.target_enemy:
+	# Return to idle if no valid target
+	if not player.target_enemy or player.target_enemy.get_is_dead():
+		player.combat.stop_auto_combat()
 		player.set_state("idle")
 
 func exit_state(player: CharacterBody2D) -> void:
-	# Make sure we clean up shooting state when interrupted
-	player.is_shooting = false
-	player.animation_player.play("idle")
+	player.combat.stop_auto_combat()

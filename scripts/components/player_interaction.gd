@@ -103,14 +103,27 @@ func _handle_npc_interaction(npc: CharacterBody2D) -> void:
 
 func _handle_enemy_interaction(enemy: CharacterBody2D) -> void:
 	if character.combat:
-		character.combat.set_target(enemy)
-		# Set target position for movement
-		set_movement_target(get_walkable_position(enemy.global_position))
-		# Update indicator above enemy
+		# Set target and show indicator
+		character.combat.target_enemy = enemy
 		_update_target_indicator(enemy.global_position - Vector2(0, enemy.indicator_offset))
+		EventBus.publish_target_acquired(enemy)
+		
+		# Calculate attack position
+		var attack_pos = get_walkable_position(enemy.global_position)
+		target_position = attack_pos
+		
+		# Move to attack position if needed
+		var distance = character.global_position.distance_to(attack_pos)
+		if distance > 50:  # Attack range
+			character.set_state("moving_to_target")
+		else:
+			character.set_state("shooting")
 
 func set_movement_target(pos: Vector2) -> void:
 	target_position = pos
+	# If we're clicking to move (not to attack), exit combat
+	if character.combat:
+		EventBus.publish_combat_state_change("idle")
 	_update_target_indicator(pos)
 	target_changed.emit(pos)
 
@@ -151,3 +164,5 @@ func clear_targets() -> void:
 	target_position = Vector2.ZERO
 	if target_indicator:
 		target_indicator.visible = false
+	if character.combat:
+		character.combat.stop_auto_combat()

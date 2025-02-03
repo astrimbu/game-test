@@ -1,7 +1,7 @@
 [gd_scene load_steps=7 format=3 uid="uid://c3u7u65sb1brk"]
 
 [ext_resource type="Script" path="res://scripts/dropped_item.gd" id="1_2quma"]
-[ext_resource type="Texture2D" uid="uid://5oskgcha2rr6" path="res://assets/Coin.png" id="2_orsrw"]
+[ext_resource type="Texture2D" uid="uid://5oskgcha2rr6" path="res://assets/coin.png" id="2_orsrw"]
 
 [sub_resource type="CircleShape2D" id="CircleShape2D_40kjv"]
 

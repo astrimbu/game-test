@@ -1,7 +1,7 @@
 class_name BaseEnemy
 extends CharacterBody2D
 
-const KNOCKBACK_FORCE = 200.0
+const KNOCKBACK_FORCE = 20.0
 const KNOCKBACK_DURATION = 0.2
 const RESPAWN_DELAY = 3.0
 
@@ -116,6 +116,9 @@ func die() -> void:
 	is_dead = true
 	velocity = Vector2.ZERO
 	
+	# Clear any player targeting this enemy
+	EventBus.publish_enemy_killed(self)
+	
 	# Store respawn info before freeing
 	var type = enemy_type
 	var pos = spawn_position
@@ -128,8 +131,6 @@ func die() -> void:
 	if animation_player.has_animation("die"):
 		animation_player.play("die")
 		await animation_player.animation_finished
-	
-	EventBus.publish_enemy_killed(self)
 	
 	# Request respawn before freeing if needed
 	if should_spawn:

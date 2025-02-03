@@ -48,6 +48,12 @@ signal enemy_respawn_requested(enemy_type: String, position: Vector2)
 signal wave_started(wave_number: int)
 signal wave_completed(wave_number: int)
 
+# Add these new signals after the existing combat signals
+signal auto_combat_started(target: CharacterBody2D)
+signal auto_combat_ended
+signal target_acquired(target: CharacterBody2D)
+signal target_lost
+
 # Helper functions to emit signals and handle side effects
 func publish_enemy_hit(enemy: CharacterBody2D) -> void:
 	enemy_hit.emit(enemy)
@@ -80,8 +86,8 @@ func publish_player_died() -> void:
 func publish_damage_dealt(amount: int, target: Node) -> void:
 	damage_dealt.emit(amount, target)
 	
-	# Check if target died from this damage
-	if target.has_method("is_dead") and target.is_dead():
+	# Check if target exists and is dead
+	if target and target.has_method("is_dead") and target.is_dead():
 		if target is CharacterBody2D:  # Assuming enemies are CharacterBody2D
 			publish_enemy_killed(target)
 
@@ -127,3 +133,18 @@ func publish_wave_started(wave_number: int) -> void:
 
 func publish_wave_completed(wave_number: int) -> void:
 	wave_completed.emit(wave_number)
+
+# Add these new helper functions at the bottom
+func publish_auto_combat_started(target: CharacterBody2D) -> void:
+	auto_combat_started.emit(target)
+	combat_started.emit()
+
+func publish_auto_combat_ended() -> void:
+	auto_combat_ended.emit()
+	combat_ended.emit()
+
+func publish_target_acquired(target: CharacterBody2D) -> void:
+	target_acquired.emit(target)
+
+func publish_target_lost() -> void:
+	target_lost.emit()
