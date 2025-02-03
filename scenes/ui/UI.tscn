@@ -16,15 +16,24 @@ script = ExtResource("1_reuxq")
 
 [node name="ResourcesUI" parent="." instance=ExtResource("1_i6yt8")]
 layout_mode = 0
-offset_left = 64.0
-offset_top = 544.0
-offset_right = 260.0
-offset_bottom = 584.0
+offset_left = 24.0
+offset_top = 584.0
+offset_right = 270.0
+offset_bottom = 624.0
 
 [node name="InventoryUI" parent="." instance=ExtResource("2_vn64w")]
-layout_mode = 1
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-grow_horizontal = 2
-grow_vertical = 2
+layout_mode = 0
+offset_left = 288.0
+offset_top = 128.0
+offset_right = 288.0
+offset_bottom = 128.0
+
+[node name="InventoryButton" type="Button" parent="."]
+custom_minimum_size = Vector2(40, 40)
+layout_mode = 0
+offset_left = 512.0
+offset_top = 576.0
+offset_right = 568.0
+offset_bottom = 632.0
+theme_override_font_sizes/font_size = 45
+text = "I"

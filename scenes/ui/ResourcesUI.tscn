@@ -30,7 +30,7 @@ layout_mode = 2
 
 [node name="XPLabel" type="Label" parent="VBoxContainer/HBoxContainer/XPContainer"]
 layout_mode = 2
-text = "XP"
+text = "0/100 XP"
 
 [node name="Background" type="TextureRect" parent="VBoxContainer/HBoxContainer/XPContainer"]
 custom_minimum_size = Vector2(64, 0)

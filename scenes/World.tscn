@@ -197,7 +197,4 @@ scale = Vector2(3, 3)
 texture = ExtResource("3_41qhp")
 
 [node name="Ui" parent="." instance=ExtResource("7_gwmih")]
-offset_left = 593.372
-offset_top = 339.586
-offset_right = 593.372
-offset_bottom = 339.586
+z_index = 10
