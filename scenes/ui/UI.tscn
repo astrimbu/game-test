@@ -1,8 +1,9 @@
-[gd_scene load_steps=4 format=3 uid="uid://ctnspd1ddsbph"]
+[gd_scene load_steps=5 format=3 uid="uid://ctnspd1ddsbph"]
 
 [ext_resource type="PackedScene" uid="uid://ckb71rvixf3ol" path="res://scenes/ui/ResourcesUI.tscn" id="1_i6yt8"]
 [ext_resource type="Script" path="res://scripts/ui/ui.gd" id="1_reuxq"]
 [ext_resource type="PackedScene" uid="uid://cxwfkmvcel505" path="res://scenes/ui/InventoryUI.tscn" id="2_vn64w"]
+[ext_resource type="PackedScene" uid="uid://cflaufetx61gm" path="res://scenes/ui/EquipmentUI.tscn" id="4_10lru"]
 
 [node name="UI" type="Control"]
 layout_mode = 3
@@ -37,3 +38,9 @@ offset_right = 568.0
 offset_bottom = 632.0
 theme_override_font_sizes/font_size = 45
 text = "I"
+
+[node name="EquipmentUI" parent="." instance=ExtResource("4_10lru")]
+offset_left = 584.0
+offset_top = 128.0
+offset_right = 584.0
+offset_bottom = 128.0

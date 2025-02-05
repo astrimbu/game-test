@@ -71,6 +71,7 @@ func publish_item_picked_up(item: ItemData) -> void:
 	SaveManager.save_game()
 
 func publish_equipment_changed(slot: String, item: ItemData) -> void:
+	print("EventBus: Equipment changed - Slot:", slot, " Item:", item.name if item else "none")
 	equipment_changed.emit(slot, item)
 	SaveManager.save_game()
 

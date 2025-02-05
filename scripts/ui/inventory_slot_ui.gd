@@ -42,6 +42,8 @@ func _on_left_click() -> void:
 		if slot_data.item.type == ItemData.ItemType.EQUIPMENT:
 			print("Attempting to equip item")
 			var previous_item = GameState.player_data.equip_item(slot_data.item)
+			# Publish equipment change event
+			EventBus.publish_equipment_changed(slot_data.item.equip_slot, slot_data.item)
 			if previous_item:
 				print("Swapped with previously equipped item:", previous_item.name)
 				slot_data.item = previous_item

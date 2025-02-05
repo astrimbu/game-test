@@ -26,7 +26,7 @@ func _ready() -> void:
 
 func _input(event: InputEvent) -> void:
 	if event.is_action_pressed("toggle_inventory"):
-		toggle_inventory()
+		toggle_visibility()
 	elif event.is_action_pressed("ui_cancel") and visible:
 		hide()
 
@@ -49,5 +49,5 @@ func update_inventory() -> void:
 	for i in range(slots.size()):
 		slots[i].update_slot(GameState.player_data.inventory[i])
 
-func toggle_inventory() -> void:
+func toggle_visibility() -> void:
 	visible = !visible

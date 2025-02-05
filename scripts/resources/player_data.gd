@@ -8,14 +8,17 @@ extends Resource
 
 # Inventory will be expanded later, for now just a placeholder
 @export var inventory_size: int = 20
-@export var inventory: Array[InventorySlot]
-@export var equipment: Dictionary = {}  # slot_name: ItemData
+@export var inventory: Array[InventorySlot] = []
+@export var equipment: Dictionary = {}  # Slot name -> ItemData
 
 func _init():
-	# Initialize empty inventory slots
-	inventory.clear()
+	# Initialize inventory slots
 	for i in range(inventory_size):
 		inventory.append(InventorySlot.new())
+	
+	# Initialize empty equipment slots
+	for slot in ["weapon", "head", "chest"]:
+		equipment[slot] = null
 
 func add_item(item: ItemData, amount: int = 1) -> int:
 	var remaining = amount
@@ -98,22 +101,17 @@ func from_dict(data: Dictionary) -> void:
 	xp = data.get("xp", 0)
 	coins = data.get("coins", 0)
 	
-	# Clear and reinitialize inventory
-	inventory.clear()
-	for i in range(inventory_size):
-		inventory.append(InventorySlot.new())
+	# Load inventory
+	var inventory_data = data.get("inventory", [])
+	for i in range(min(inventory_data.size(), inventory.size())):
+		if inventory_data[i]:
+			inventory[i].from_dict(inventory_data[i])
 	
-	# Load saved inventory data if it exists
-	var saved_inventory = data.get("inventory", [])
-	for i in range(min(saved_inventory.size(), inventory.size())):
-		if saved_inventory[i]:  # If slot has data
-			# Convert the saved data to a dictionary if it isn't already
-			var slot_data = saved_inventory[i]
-			if not slot_data is Dictionary:
-				slot_data = {
-					"item": slot_data.item if slot_data.get("item") else "",
-					"amount": slot_data.amount if slot_data.get("amount") else 0
-				}
-			inventory[i].from_dict(slot_data)
-	
-	equipment = data.get("equipment", {})
+	# Load equipment
+	var equipment_data = data.get("equipment", {})
+	for slot_name in equipment_data:
+		var item_path = equipment_data[slot_name]
+		if item_path and not item_path.is_empty():
+			equipment[slot_name] = load(item_path) as ItemData
+		else:
+			equipment[slot_name] = null

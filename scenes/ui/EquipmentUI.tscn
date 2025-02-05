@@ -1,0 +1,22 @@
+[gd_scene load_steps=3 format=3 uid="uid://cflaufetx61gm"]
+
+[ext_resource type="Script" path="res://scripts/ui/equipment_ui.gd" id="1_7kajy"]
+[ext_resource type="PackedScene" uid="uid://dj2fctcnrcn85" path="res://scenes/ui/EquipmentSlotUI.tscn" id="2_ndd5j"]
+
+[node name="EquipmentUi" type="Control"]
+layout_mode = 3
+anchors_preset = 0
+script = ExtResource("1_7kajy")
+slot_scene = ExtResource("2_ndd5j")
+
+[node name="Background" type="Panel" parent="."]
+layout_mode = 0
+offset_right = 64.0
+offset_bottom = 232.0
+
+[node name="Slots" type="GridContainer" parent="."]
+layout_mode = 0
+offset_left = 8.0
+offset_top = 8.0
+offset_right = 56.0
+offset_bottom = 224.0
