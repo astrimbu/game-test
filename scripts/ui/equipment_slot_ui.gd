@@ -6,6 +6,7 @@ extends Panel
 
 var slot_type: String = ""  # "weapon", "head", etc.
 var current_item: ItemData = null
+var ui_reference: Control = null
 
 func _ready() -> void:
 	# Connect to equipment change events
@@ -14,6 +15,8 @@ func _ready() -> void:
 func setup(type: String, label: String) -> void:
 	slot_type = type
 	slot_label.text = label
+	# Get UI reference from parent EquipmentUI
+	ui_reference = get_parent().get_parent().ui
 	# Check if there's already an item equipped
 	var equipped_item = GameState.player_data.equipment.get(slot_type)
 	if equipped_item:
@@ -34,8 +37,9 @@ func _on_equipment_changed(slot: String, item: ItemData) -> void:
 
 func _gui_input(event: InputEvent) -> void:
 	if event is InputEventMouseButton and event.pressed:
-		if event.button_index == MOUSE_BUTTON_RIGHT:
-			unequip_item()
+		match event.button_index:
+			MOUSE_BUTTON_LEFT, MOUSE_BUTTON_RIGHT:
+				unequip_item()
 
 func unequip_item() -> void:
 	if current_item:
@@ -45,3 +49,5 @@ func unequip_item() -> void:
 			var remaining = GameState.player_data.add_item(removed_item)
 			if remaining == 0:
 				EventBus.publish_equipment_changed(slot_type, null)
+				if ui_reference:
+					ui_reference.refresh_ui()

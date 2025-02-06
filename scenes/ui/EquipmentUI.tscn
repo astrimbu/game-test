@@ -12,7 +12,7 @@ slot_scene = ExtResource("2_ndd5j")
 [node name="Background" type="Panel" parent="."]
 layout_mode = 0
 offset_right = 64.0
-offset_bottom = 232.0
+offset_bottom = 220.0
 
 [node name="Slots" type="GridContainer" parent="."]
 layout_mode = 0

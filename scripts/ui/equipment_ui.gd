@@ -2,6 +2,7 @@ extends Control
 
 @export var slot_scene: PackedScene
 @onready var grid_container: GridContainer = $Slots
+@onready var ui = get_parent()
 
 var slots: Dictionary = {}
 var EQUIPMENT_SLOTS = {

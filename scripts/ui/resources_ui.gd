@@ -46,3 +46,8 @@ func _update_xp_bar() -> void:
 	var fill_amount = float(level_progress) / max_xp
 	xp_fill.scale.x = fill_amount
 	xp_label.text = "%d/%d XP" % [level_progress, max_xp]
+
+func refresh() -> void:
+	level_label.text = "Lvl: %d" % GameState.player_data.level
+	_update_xp_bar()
+	coins_label.text = str(GameState.player_data.coins)
