@@ -165,19 +165,8 @@ func publish_item_collected(item_data: Dictionary) -> void:
 
 func publish_inventory_item_collected(item: ItemData) -> void:
 	print("EventBus: Adding item to inventory:", item.name)
-	# Try to add to inventory
-	var remaining = GameState.player_data.add_item(item)
-	if remaining == 0:
-		# Item was fully added to inventory
-		print("EventBus: Item added successfully")
-		item_picked_up.emit(item)
-		# Make sure UI updates
-		if get_tree().root.has_node("UI"):
-			var ui = get_tree().root.get_node("UI")
-			ui.refresh_ui()
-		SaveManager.save_game()
-	else:
-		print("EventBus: Inventory full!")
+	item_picked_up.emit(item)
+	SaveManager.save_game()
 
 func reset_game_state() -> void:
 	print("EventBus: Resetting game state")

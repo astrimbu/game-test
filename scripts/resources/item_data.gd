@@ -5,6 +5,7 @@ enum ItemType { CONSUMABLE, EQUIPMENT, RESOURCE }
 enum ItemRarity { COMMON, UNCOMMON, RARE, EPIC }
 
 @export var id: String
+@export var unique_id: String = ""
 @export var name: String
 @export var description: String
 @export var type: ItemType
@@ -19,6 +20,10 @@ enum ItemRarity { COMMON, UNCOMMON, RARE, EPIC }
 
 # Consumable-specific properties
 @export var use_effect: Dictionary = {} # {"health": 20, "mana": 10, etc.}
+
+func _init():
+	if unique_id.is_empty():
+		unique_id = str(Time.get_unix_time_from_system()) + "_" + str(randi())
 
 func can_stack_with(other: ItemData) -> bool:
 	return stackable and id == other.id

@@ -18,10 +18,20 @@ func _ready() -> void:
 		var slot = slot_scene.instantiate() as EquipmentSlotUI
 		grid_container.add_child(slot)
 		slot.setup(slot_id, EQUIPMENT_SLOTS[slot_id])
+		slot.ui_reference = get_parent()
 		slots[slot_id] = slot
+	
+	# Connect to game state reset
+	EventBus.game_state_reset.connect(_on_game_state_reset)
 	
 	# Hide by default
 	visible = false
+
+func _on_game_state_reset() -> void:
+	print("EquipmentUI: Handling game state reset")
+	# Clear all equipment slots
+	for slot in slots.values():
+		slot.update_slot(null)
 
 func toggle_visibility() -> void:
 	visible = !visible
