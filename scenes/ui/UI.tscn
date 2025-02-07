@@ -1,9 +1,10 @@
-[gd_scene load_steps=5 format=3 uid="uid://ctnspd1ddsbph"]
+[gd_scene load_steps=6 format=3 uid="uid://ctnspd1ddsbph"]
 
 [ext_resource type="PackedScene" uid="uid://ckb71rvixf3ol" path="res://scenes/ui/ResourcesUI.tscn" id="1_i6yt8"]
 [ext_resource type="Script" path="res://scripts/ui/ui.gd" id="1_reuxq"]
 [ext_resource type="PackedScene" uid="uid://cxwfkmvcel505" path="res://scenes/ui/InventoryUI.tscn" id="2_vn64w"]
 [ext_resource type="PackedScene" uid="uid://cflaufetx61gm" path="res://scenes/ui/EquipmentUI.tscn" id="4_10lru"]
+[ext_resource type="PackedScene" uid="uid://dtn5rwtf7tjeg" path="res://scenes/ui/PauseUI.tscn" id="5_l23al"]
 
 [node name="UI" type="Control"]
 layout_mode = 3
@@ -44,3 +45,19 @@ offset_left = 720.0
 offset_top = 128.0
 offset_right = 720.0
 offset_bottom = 128.0
+
+[node name="PauseUI" parent="." instance=ExtResource("5_l23al")]
+process_mode = 3
+offset_left = 488.0
+offset_top = 240.0
+offset_right = 488.0
+offset_bottom = 240.0
+
+[node name="PauseButton" type="Button" parent="."]
+layout_mode = 0
+offset_left = 824.0
+offset_top = 584.0
+offset_right = 872.0
+offset_bottom = 632.0
+theme_override_font_sizes/font_size = 36
+text = "P"

@@ -57,6 +57,7 @@ signal target_lost
 
 # Dev tool signals
 signal game_state_reset
+signal toggle_pause
 
 # Helper functions to emit signals and handle side effects
 func publish_enemy_hit(enemy: CharacterBody2D) -> void:

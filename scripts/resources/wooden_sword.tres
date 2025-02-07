@@ -6,6 +6,7 @@
 [resource]
 script = ExtResource("1_ep3fh")
 id = "wooden_sword"
+unique_id = ""
 name = "Wooden Sword"
 description = "A basic training sword"
 type = 1
