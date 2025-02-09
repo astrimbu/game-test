@@ -31,7 +31,6 @@ var knockback_timer = 0.0
 var current_health
 var is_dead = false
 
-@export var dropped_item_scene: PackedScene = preload("res://scenes/DroppedItem.tscn")
 @onready var movement_controller: EnemyMovementController = $MovementController
 
 # Add a new resource type for enemy configuration
@@ -157,7 +156,16 @@ func spawn_dropped_items() -> void:
 			})
 
 func spawn_world_item(item_data: Dictionary) -> void:
-	var dropped_item = dropped_item_scene.instantiate()
+	var scene_to_spawn
+	match item_data.type:
+		"coin":
+			scene_to_spawn = preload("res://scenes/DroppedCoin.tscn")
+		"inventory_item":
+			scene_to_spawn = preload("res://scenes/DroppedInventoryItem.tscn")
+		_:
+			scene_to_spawn = preload("res://scenes/DroppedItem.tscn")
+	
+	var dropped_item = scene_to_spawn.instantiate()
 	get_parent().add_child(dropped_item)
 	dropped_item.initialize(item_data, global_position)
 
