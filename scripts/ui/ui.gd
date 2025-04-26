@@ -23,9 +23,11 @@ func _ready() -> void:
 
 func _on_inventory_button_pressed() -> void:
 	toggle_inventory()
+	inventory_button.release_focus()
 
 func _on_pause_button_pressed() -> void:
 	EventBus.toggle_pause.emit()
+	pause_button.release_focus()
 
 func toggle_inventory() -> void:
 	inventory_ui.toggle_visibility()

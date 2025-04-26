@@ -11,8 +11,6 @@ var drop_height: float = -50.0
 var drop_duration: float = 0.75
 var time_elapsed: float = 0.0
 
-var dropped_item_scene = preload("res://scenes/DroppedItem.tscn")
-
 func _ready():
 	# Set collision layer to Layer 5 (Items)
 	collision_layer = 0b10000  # Layer 5
