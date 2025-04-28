@@ -16,9 +16,12 @@ func update_state(player: CharacterBody2D, delta: float) -> void:
 	
 	# Check if we've landed
 	if player.is_on_floor():
-		if player.target_position:
-			player.set_state("moving_to_target")
+		# Player._unhandled_input will likely handle clicks that happened mid-air
+		# Check if player has a move target destination (set via click before/during jump)
+		if player.interaction.target_position != Vector2.ZERO:
+			player.request_state_change("moving")
+		# Check if movement keys are held upon landing
 		elif Input.get_axis("ui_left", "ui_right") != 0:
-			player.set_state("walking")
+			player.request_state_change("moving")
 		else:
-			player.set_state("idle")
+			player.request_state_change("idle")

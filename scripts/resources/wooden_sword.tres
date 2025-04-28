@@ -16,6 +16,10 @@ stackable = false
 max_stack = 1
 equip_slot = "weapon"
 stats = {
-"damage": 2
+"animation": "swing",
+"attack_style": "melee",
+"cooldown": 0.8,
+"damage": 2,
+"range": 25.0
 }
 use_effect = {}

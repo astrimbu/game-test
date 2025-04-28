@@ -23,7 +23,7 @@ func _on_started_moving() -> void:
 	animation_player.play("walk")
 
 func _on_stopped_moving() -> void:
-	if not animation_player.current_animation in ["shoot", "jump"]:
+	if not animation_player.current_animation in ["punch", "jump"]:
 		animation_player.play("idle")
 
 func _on_combat_animation_started(animation_name: String) -> void:

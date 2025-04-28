@@ -5,6 +5,11 @@
 [resource]
 script = ExtResource("1_3epgw")
 base_damage = 1
-attack_speed = 1.0
-attack_range = 100.0
+default_attack_range = 100.0
 projectile_speed = 300.0
+unarmed_attack_style = "unarmed"
+unarmed_attack_range = 15.0
+unarmed_attack_cooldown = 0.6
+unarmed_attack_animation = "punch"
+unarmed_damage_delay = 0.4
+unarmed_animation_duration = 1.0

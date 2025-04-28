@@ -35,6 +35,8 @@ func jump() -> void:
 		jumped.emit()
 
 func move(direction: float) -> void:
+	print("DEBUG: PlayerMovement.move called with direction: ", direction) # DEBUG
+	print("DEBUG: Velocity BEFORE move: ", character.velocity) # DEBUG
 	if direction != 0:
 		# Use acceleration for smoother movement
 		character.velocity.x = move_toward(
@@ -52,6 +54,7 @@ func move(direction: float) -> void:
 			0,
 			friction * get_physics_process_delta_time()
 		)
+		print("DEBUG: Velocity AFTER applying friction: ", character.velocity) # DEBUG
 		stopped_moving.emit()
 
 func drop_through_platform() -> void:
@@ -113,9 +116,13 @@ func has_platform_above() -> bool:
 	return results and results.position.y < character.global_position.y - 10 
 
 func set_facing_direction(direction: float) -> void:
+	print("DEBUG: set_facing_direction called with direction: ", direction, ", current facing_direction: ", facing_direction) # DEBUG
+	print("DEBUG: character.scale.x BEFORE flip check: ", character.scale.x) # DEBUG
 	if direction != facing_direction:
+		print("DEBUG: Flipping scale!") # DEBUG
 		facing_direction *= -1
 		character.scale.x *= -1
+	print("DEBUG: character.scale.x AFTER flip check: ", character.scale.x) # DEBUG
 
 func _on_drop_timer_timeout() -> void:
 	can_drop_through = true

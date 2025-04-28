@@ -6,9 +6,15 @@ signal started_npc_interaction(npc)
 signal ended_npc_interaction(npc)
 signal target_changed(new_target_position)
 
-@export var config: PlayerConfig
+# New Intent Signals
+signal intent_move_to(position: Vector2)
+signal intent_attack(enemy: CharacterBody2D)
+signal intent_interact(npc: CharacterBody2D)
+
+@export var config: PlayerConfig # RESTORE this export
 @export var character: CharacterBody2D
-@export var target_indicator: Node2D
+# @export var target_indicator: Node2D # REMOVE this export
+var target_indicator: Node2D = null # Keep the variable, but don't export
 
 var target_position: Vector2 = Vector2.ZERO
 var target_npc: CharacterBody2D = null
@@ -16,16 +22,55 @@ var ray_length := 50
 
 # Add a constant for pickup range
 const PICKUP_RANGE := 2000.0  # Adjust this value as needed
+const PUNCH_RANGE := 15.0 # Range within which the player can punch
 
 # Flag to track if an item was picked up on mouse down
 var item_picked_up: bool = false
 
+func _ready() -> void:
+	# Find the target indicator node, assuming it's a sibling of the Player node
+	# IMPORTANT: Assumes the node in the World scene is named "TargetIndicator"
+	# and is a direct child of the same node as the Player instance.
+	var player_parent = character.get_parent()
+	if player_parent:
+		target_indicator = player_parent.find_child("TargetIndicator", false, false) # Non-recursive search among siblings
+	
+	# Fallback: If not found as sibling, try searching from root (previous method)
+	if not target_indicator:
+		target_indicator = get_tree().get_root().find_child("TargetIndicator", true, false)
+
+	if not target_indicator:
+		# Use push_warning instead of print_warning
+		push_warning("PlayerInteraction: Could not find 'TargetIndicator' node in the scene tree (checked siblings and root).")
+	else:
+		# Ensure it's hidden initially
+		target_indicator.visible = false
+
 func _physics_process(_delta: float) -> void:
 	# Update target indicator position if we're targeting an enemy
-	if character.combat and character.combat.target_enemy and target_indicator:
+	if target_indicator and character and character.combat: # Add null checks
 		var enemy = character.combat.target_enemy
-		if is_instance_valid(enemy) and not enemy.get_is_dead():
-			_update_target_indicator(enemy.global_position - Vector2(0, enemy.indicator_offset))
+		# DEBUG:
+		# print("DEBUG Interaction: Physics process running. Target Indicator node: ", target_indicator)
+		# print("DEBUG Interaction: Current target_enemy: ", enemy)
+		
+		if is_instance_valid(enemy):
+			if not enemy.get_is_dead():
+				# Enemy is valid and alive, update indicator position
+				# Safely get offset, default to 0.0 if property doesn't exist
+				var offset = enemy.indicator_offset if "indicator_offset" in enemy else 0.0
+				var target_pos = enemy.global_position - Vector2(0, offset)
+				_update_target_indicator(target_pos)
+			else:
+				# Enemy is valid but dead, hide indicator
+				if target_indicator.visible:
+					target_indicator.visible = false
+		else:
+			# No valid enemy target, hide indicator
+			if target_indicator.visible:
+				target_indicator.visible = false
+	# Consider if indicator should also be hidden if character.combat is null?
+	# The outer check handles this implicitly.
 
 func handle_mouse_down(clicked_pos: Vector2) -> void:
 	_handle_mouse_down(clicked_pos)
@@ -77,55 +122,16 @@ func _handle_mouse_up(clicked_pos: Vector2) -> void:
 	if not interact_results.is_empty():
 		var clicked_object = interact_results[0].collider
 		if clicked_object.get_collision_layer_value(4):  # NPC check
-			_handle_npc_interaction(clicked_object)
+			intent_interact.emit(clicked_object)
 			return
 		elif clicked_object.get_collision_layer_value(3):  # Enemy check
-			_handle_enemy_interaction(clicked_object)
+			intent_attack.emit(clicked_object)
 			return
 	
-	# If nothing interactive was clicked, handle as movement
-	set_movement_target(get_walkable_position(clicked_pos))
-
-func _handle_npc_interaction(npc: CharacterBody2D) -> void:
-	target_npc = npc
-	
-	# Calculate interaction position
-	var height_difference = abs(npc.global_position.y - character.global_position.y)
-	var direction = sign(npc.global_position.x - character.global_position.x)
-	
-	if height_difference <= 10:
-		target_position = npc.global_position - Vector2(direction * config.INTERACTION_DISTANCE, 0)
-	else:
-		target_position = get_walkable_position(npc.global_position - Vector2(direction * 50, 0))
-	
-	_update_target_indicator(npc.global_position - Vector2(0, npc.indicator_offset))
-	target_changed.emit(target_position)
-
-func _handle_enemy_interaction(enemy: CharacterBody2D) -> void:
-	if character.combat:
-		# Set target and show indicator
-		character.combat.target_enemy = enemy
-		_update_target_indicator(enemy.global_position - Vector2(0, enemy.indicator_offset))
-		EventBus.publish_target_acquired(enemy)
-		
-		# Calculate attack position
-		var attack_pos = get_walkable_position(enemy.global_position)
-		target_position = attack_pos
-		
-		# Move to attack position if needed
-		var distance = character.global_position.distance_to(attack_pos)
-		if distance > 50:  # Attack range
-			character.set_state("moving_to_target")
-		else:
-			character.set_state("shooting")
-
-func set_movement_target(pos: Vector2) -> void:
-	target_position = pos
-	# If we're clicking to move (not to attack), exit combat
-	if character.combat:
-		EventBus.publish_combat_state_change("idle")
-	_update_target_indicator(pos)
-	target_changed.emit(pos)
+	# If nothing interactive was clicked, handle as movement intent
+	var walkable_pos = get_walkable_position(clicked_pos)
+	if walkable_pos != Vector2.ZERO:
+		intent_move_to.emit(walkable_pos)
 
 func _update_target_indicator(pos: Vector2) -> void:
 	if target_indicator:
@@ -133,6 +139,7 @@ func _update_target_indicator(pos: Vector2) -> void:
 		target_indicator.visible = true
 
 func get_walkable_position(clicked_pos: Vector2) -> Vector2:
+	print("DEBUG: get_walkable_position called with clicked_pos: ", clicked_pos) # DEBUG
 	var space_state = character.get_world_2d().direct_space_state
 	
 	# Try direct ray first
@@ -143,7 +150,9 @@ func get_walkable_position(clicked_pos: Vector2) -> Vector2:
 	)
 	
 	var result = space_state.intersect_ray(params)
+	print("DEBUG: Direct raycast result: ", result) # DEBUG
 	if result:
+		print("DEBUG: Direct raycast hit. Returning: ", result.position) # DEBUG
 		return result.position
 	
 	# Try longer ray if no direct hit
@@ -154,15 +163,25 @@ func get_walkable_position(clicked_pos: Vector2) -> Vector2:
 	)
 	
 	result = space_state.intersect_ray(params)
-	if result and result.position.y >= character.position.y - 20:
-		return Vector2(clicked_pos.x, result.position.y)
+	print("DEBUG: Longer raycast result: ", result) # DEBUG
+	if result:
+		var return_pos = Vector2(clicked_pos.x, result.position.y) # DEBUG
+		print("DEBUG: Longer raycast hit valid position. Returning: ", return_pos) # DEBUG
+		return return_pos
 	
-	return character.position
+	print("DEBUG: NO WALKABLE POSITION FOUND, RETURNING Vector2.ZERO") # DEBUG Renamed from NULL VECTOR for clarity
+	# Return Vector2.ZERO to indicate invalid position
+	return Vector2.ZERO
 
+# New function to clear interaction targets
 func clear_targets() -> void:
-	target_npc = null
+	print("DEBUG: PlayerInteraction clear_targets called")
 	target_position = Vector2.ZERO
+	target_npc = null
 	if target_indicator:
 		target_indicator.visible = false
-	if character.combat:
-		character.combat.stop_auto_combat()
+
+# func _get_configuration_warnings() -> PackedStringArray:
+# 	if not character:
+# 		return ["Character node not assigned!"]
+# 	return []

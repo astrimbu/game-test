@@ -22,6 +22,10 @@ extends Resource
 @export var RAY_LENGTH := 200.0
 @export var RAY_ANGLES: Array[float] = [0.0, 15.0, 30.0, 45.0, 60.0]
 
+# Combat
+@export_group("Combat")
+@export var VERTICAL_TOLERANCE := 20.0 # Max Y diff for ground attacks
+
 # Stats that might be affected by equipment
 func get_modified_speed() -> float:
 	var base = SPEED
