@@ -71,19 +71,25 @@ func _on_damage_apply_timer_timeout() -> void:
 		print("Combat: Target died before damage applied.")
 		return
 
+	# Capture name *before* potentially freeing the enemy via take_damage
+	var enemy_name = target_enemy.name 
+
 	# --- Perform the attack damage/action based on style ---
 	print("Combat: Applying damage with style: %s" % current_attack_style)
 	if current_attack_style == "unarmed" or current_attack_style == "melee":
 		var damage = get_total_damage()
-		target_enemy.take_damage(damage)
+		target_enemy.take_damage(damage) # Enemy might be freed here
 		EventBus.publish_damage_dealt(damage, target_enemy)
-		print("Combat: Applied %d melee/unarmed damage to %s" % [damage, target_enemy.name])
+		# Use the captured name in the print statement
+		print("Combat: Applied %d melee/unarmed damage to %s" % [damage, enemy_name])
 	elif current_attack_style == "ranged":
 		# TODO: Implement projectile spawning
 	
 		var damage = get_total_damage()
-		target_enemy.take_damage(damage)
+		target_enemy.take_damage(damage) # Enemy might be freed here
 		EventBus.publish_damage_dealt(damage, target_enemy)
+		# Use the captured name if you add a print here later
+		# print("Combat: Applied %d ranged damage to %s" % [damage, enemy_name])
 	elif current_attack_style == "magic":
 		print("Combat: Magic attack - Placeholder.")
 	else:
@@ -92,6 +98,7 @@ func _on_damage_apply_timer_timeout() -> void:
 
 	# Damage applied. Now start the cooldown timer for the *next* attack.
 	# The cooldown runs *after* the damage point.
+	# Re-check validity *after* damage application, as the enemy might be dead/null now.
 	if auto_combat_enabled and is_instance_valid(target_enemy) and not target_enemy.get_is_dead():
 		# Start the FULL cooldown timer now.
 		print("Combat: Damage applied. Starting FULL cooldown timer for %.2f seconds." % current_attack_cooldown)
@@ -105,11 +112,13 @@ func _on_animation_complete() -> void:
 func _on_enemy_killed(enemy: BaseEnemy) -> void:
 	# Check if the killed enemy was our current target
 	if enemy == target_enemy:
-		print("Combat: Target enemy killed. Allowing animation to complete.")
+		print("Combat: Target enemy killed. Clearing target and stopping combat loop.")
 		# Prevent the loop from continuing after the current cooldown finishes
 		auto_combat_enabled = false 
 		# Stop attack timer to prevent starting new attacks
 		attack_timer.stop()
+		# Clear the reference to the now-dead enemy
+		target_enemy = null 
 		# Let the current animation finish via animation_complete_timer
 
 func start_attacking(target: CharacterBody2D) -> void:

@@ -10,6 +10,8 @@ signal dropped_through_platform
 @export var config: PlayerConfig
 @export var character: CharacterBody2D
 
+@onready var collision_shape: CollisionShape2D = character.get_node("CollisionShape2D") # Adjust path if needed
+
 var gravity: float = ProjectSettings.get_setting("physics/2d/default_gravity")
 var facing_direction: float = 1
 var can_drop_through: bool = true
@@ -38,23 +40,14 @@ func move(direction: float) -> void:
 	print("DEBUG: PlayerMovement.move called with direction: ", direction) # DEBUG
 	print("DEBUG: Velocity BEFORE move: ", character.velocity) # DEBUG
 	if direction != 0:
-		# Use acceleration for smoother movement
-		character.velocity.x = move_toward(
-			character.velocity.x,
-			direction * config.get_modified_speed(),
-			config.ACCELERATION * get_physics_process_delta_time()
-		)
+		# Set velocity directly for instantaneous movement
+		character.velocity.x = direction * config.get_modified_speed()
 		set_facing_direction(direction)
 		started_moving.emit()
 	else:
-		# Apply friction when not moving
-		var friction = config.FRICTION if character.is_on_floor() else config.AIR_RESISTANCE
-		character.velocity.x = move_toward(
-			character.velocity.x,
-			0,
-			friction * get_physics_process_delta_time()
-		)
-		print("DEBUG: Velocity AFTER applying friction: ", character.velocity) # DEBUG
+		# Instantly stop horizontal movement when input is zero
+		character.velocity.x = 0
+		print("DEBUG: Velocity AFTER stopping: ", character.velocity) # DEBUG
 		stopped_moving.emit()
 
 func drop_through_platform() -> void:
@@ -81,17 +74,33 @@ func drop_through_platform() -> void:
 	)
 
 func will_fall_off_edge(direction: float) -> bool:
-	var space_state = character.get_world_2d().direct_space_state
-	var check_position = character.global_position + Vector2(direction * 10, -5)
+	if not character.is_on_floor(): # Only check for falling off edges if currently on the floor
+		return false
+
+	# Parameters for testing
+	var step_forward_distance = 5.0 # How far ahead to check horizontally (adjust as needed)
+	var step_down_distance = 10.0  # How far down to check from the forward position (adjust as needed)
+
+	# Simulate moving slightly forward
+	var forward_motion = Vector2(direction * step_forward_distance, 0)
+
+	# Get the transform the character would have after moving forward
+	# Note: CharacterBody2D transform doesn't update immediately with velocity,
+	# so we calculate the potential future transform based on current position.
+	var future_transform = character.transform.translated(forward_motion)
 	
-	var params = PhysicsRayQueryParameters2D.create(
-		check_position,
-		check_position + Vector2(0, 10),
-		1
-	)
-	
-	var result = space_state.intersect_ray(params)
-	return result.is_empty()
+	# Define the downward motion to test for ground
+	var down_motion = Vector2(0, step_down_distance)
+
+	# Test moving down from the potential future position.
+	# test_move returns true if a collision *would* occur.
+	if not character.test_move(future_transform, down_motion):
+		# If test_move is false, it means NO collision would occur moving down -> potential edge
+		# print("DEBUG: test_move detected potential edge fall!") # Optional Debug
+		return true # No ground detected below the forward position -> will fall
+	else:
+		# If test_move is true, it means a collision *would* occur -> ground is present
+		return false # Ground detected -> won't fall
 
 func has_platform_below() -> bool:
 	var space_state = character.get_world_2d().direct_space_state

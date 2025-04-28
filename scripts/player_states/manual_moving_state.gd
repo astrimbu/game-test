@@ -13,13 +13,16 @@ func update_state(player: CharacterBody2D, delta: float) -> void:
 	var direction = Input.get_axis("ui_left", "ui_right")
 
 	if direction != 0:
-		player.movement.move(direction)
+		# Check for edge before moving
+		if player.is_on_floor() and player.will_fall_off_edge(direction):
+			# Stop horizontal movement if moving towards an edge
+			player.movement.move(0)
+		else:
+			player.movement.move(direction)
 	else:
 		# If no direction input, transition back to idle
 		player.movement.move(0) # Stop movement
 		player.request_state_change("idle")
-		# move_and_slide will be called after state change in idle or by player itself? Let's call it here to apply stop.
-		player.move_and_slide() 
 		return # Exit early as we are changing state
 
 	# Check for jump input (optional, could be its own state or handled here)

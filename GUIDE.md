@@ -73,4 +73,36 @@ This directory contains the core game logic.
 
 ---
 
-*This guide is automatically generated and may need further refinement.* 
+*This guide is automatically generated and may need further refinement.*
+
+# Player
+
+## Player Movement
+
+The player character is controlled using a state machine pattern located in `scripts/player_states/`. Movement logic is primarily handled by the `PlayerMovement` component (`scripts/components/player_movement.gd`). Horizontal movement is now instantaneous, without acceleration or friction.
+
+### Keyboard Movement
+
+Keyboard input (`ui_left`, `ui_right`) is handled in the `ManualMovingState`. It transitions from `IdleState` when movement keys are pressed and back when they are released.
+
+### Mouse Click Movement
+
+Mouse clicks are handled by the `PlayerInteraction` component (`scripts/components/player_interaction.gd`). It determines the clicked object or position and emits intent signals:
+
+*   `intent_move_to`: If ground is clicked, the player enters the `MovingState` to move towards the `target_position`.
+*   `intent_attack`: If an enemy is clicked, the player enters `ApproachingEnemyState`.
+*   `intent_interact`: If an NPC is clicked, the player enters `ApproachingNPCState`.
+
+The `MovingState` handles pathfinding to the `target_position` set by the interaction component.
+
+### Jumping and Falling
+
+Jumping (`ui_up`) is handled in the `JumpingState`. Gravity is applied in each state's `apply_gravity` helper function.
+
+### Edge Detection
+
+The player character now checks for ground slightly ahead before moving horizontally (both via keyboard input and mouse clicks) when on the floor. If no ground is detected (i.e., moving towards an edge), horizontal movement is prevented, stopping the player at the platform edge. This logic resides in the `PlayerMovement.will_fall_off_edge` method, which uses the `CharacterBody2D.test_move` function to predict collisions, and is checked within the `ManualMovingState` and `MovingState` update functions.
+
+## Player Combat
+
+The player combat logic is managed by the `PlayerCombat` component (`scripts/components/player_combat.gd`). It determines attack properties (style, range, cooldown, animation, damage delay) based on equipped weapon or unarmed defaults. Uses Timers to manage the attack sequence (animation start, damage application delay, cooldown, animation end). Applies damage to target enemy, handles attack looping (auto-combat), listens for enemy death via EventBus, and calculates total damage. 

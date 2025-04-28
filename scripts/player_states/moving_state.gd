@@ -52,7 +52,12 @@ func update_state(player: CharacterBody2D, delta: float) -> void:
 
 	if distance_to_target > ARRIVAL_THRESHOLD:
 		var direction_to_target = sign(target_pos.x - current_pos.x)
-		player.movement.move(direction_to_target)
+		# Check for edge before moving
+		if player.is_on_floor() and player.will_fall_off_edge(direction_to_target):
+			# Stop horizontal movement if moving towards an edge
+			player.movement.move(0)
+		else:
+			player.movement.move(direction_to_target)
 	else:
 		# Reached the target position
 		player.movement.move(0) # Stop movement

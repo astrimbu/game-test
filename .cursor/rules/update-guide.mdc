@@ -3,4 +3,4 @@ description:
 globs: 
 alwaysApply: true
 ---
-When adding, removing, or editing any feature or system, update [GUIDE.md](mdc:GUIDE.md) to reflect the change.
+ - When adding, removing, or editing any feature or system, update [GUIDE.md](mdc:GUIDE.md) to reflect the change.
