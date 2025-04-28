@@ -146,14 +146,13 @@ func spawn_dropped_items() -> void:
 			"value": coin_value
 		})
 	
-	# Random chance to drop an inventory item
-	if randf() < 1:
-		var item = get_random_drop()
-		if item:
-			spawn_world_item({
-				"type": "inventory_item",
-				"item": item
-			})
+	# Attempt to get a random drop
+	var item = get_random_drop()
+	if item:
+		spawn_world_item({
+			"type": "inventory_item",
+			"item": item
+		})
 
 func spawn_world_item(item_data: Dictionary) -> void:
 	# Always use the main dropped item scene.
@@ -165,8 +164,13 @@ func spawn_world_item(item_data: Dictionary) -> void:
 	dropped_item.initialize(item_data, global_position)
 
 func get_random_drop() -> ItemData:
-	# For now, just return the wooden sword
-	return preload("res://scripts/resources/wooden_sword.tres")
+	# Only bats have a chance to drop the wooden sword for now.
+	if enemy_type == "bat":
+		if randf() < 0.2: # 1/5 chance
+			return preload("res://scripts/resources/wooden_sword.tres")
+	
+	# Other enemies drop nothing for now, or bat failed the roll.
+	return null
 
 func _on_item_collected(item_data: Dictionary):
 	if item_data.type == "coin":

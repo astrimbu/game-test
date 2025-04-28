@@ -111,4 +111,26 @@ The player combat logic is managed by the `PlayerCombat` component (`scripts/com
 
 - **Dropped Items:** Items dropped by enemies (coins, equipment) appear on the ground.
 - **Pickup:** Click and hold the left mouse button and drag the cursor over items on the ground to pick them up. Items within range will be collected automatically.
-- **Inventory:** Collected items (except coins) are added to the player's inventory. 
+- **Inventory:** Collected items (except coins) are added to the player's inventory.
+
+---
+
+## Debugging
+
+Debug prints are used throughout the codebase for development and testing. To reduce console spam, some frequently called functions (like `PlayerMovement.set_facing_direction`) now only print debug messages when a relevant state change occurs (e.g., when the player actually changes direction). Additionally, verbose prints related to velocity changes during movement (`PlayerMovement.move`) and raycasting for walkable positions (`PlayerInteraction.get_walkable_position`) have been commented out by default, but can be re-enabled if needed for specific debugging tasks.
+
+## Enemy Drops
+
+Enemy drop logic is handled within `scripts/enemies/base_enemy.gd` in the `spawn_dropped_items()` and `get_random_drop()` functions.
+
+*   **Coins:** All enemies drop their specified `coin_value`.
+*   **Items:**
+    *   Currently, only the `bat_enemy` has a chance to drop an item.
+    *   `bat_enemy` has a 1/5 (20%) chance to drop a `wooden_sword` upon death.
+    *   Other enemies currently do not drop any items.
+
+*   **Quests:** Systems for managing quests.
+    *   `quest.gd`: Base quest script.
+    *   `quest_data.gd`: Data structure for quest information.
+    *   `quest_database.gd`: Holds all available quests.
+    *   `quest_manager.gd`: Tracks active quests and player progress. 

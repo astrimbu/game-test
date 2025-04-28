@@ -152,7 +152,6 @@ func _update_target_indicator(pos: Vector2) -> void:
 		target_indicator.visible = true
 
 func get_walkable_position(clicked_pos: Vector2) -> Vector2:
-	print("DEBUG: get_walkable_position called with clicked_pos: ", clicked_pos) # DEBUG
 	var space_state = character.get_world_2d().direct_space_state
 	
 	# Try direct ray first
@@ -163,9 +162,7 @@ func get_walkable_position(clicked_pos: Vector2) -> Vector2:
 	)
 	
 	var result = space_state.intersect_ray(params)
-	print("DEBUG: Direct raycast result: ", result) # DEBUG
 	if result:
-		print("DEBUG: Direct raycast hit. Returning: ", result.position) # DEBUG
 		return result.position
 	
 	# Try longer ray if no direct hit
@@ -176,13 +173,10 @@ func get_walkable_position(clicked_pos: Vector2) -> Vector2:
 	)
 	
 	result = space_state.intersect_ray(params)
-	print("DEBUG: Longer raycast result: ", result) # DEBUG
 	if result:
-		var return_pos = Vector2(clicked_pos.x, result.position.y) # DEBUG
-		print("DEBUG: Longer raycast hit valid position. Returning: ", return_pos) # DEBUG
+		var return_pos = Vector2(clicked_pos.x, result.position.y)
 		return return_pos
 	
-	print("DEBUG: NO WALKABLE POSITION FOUND, RETURNING Vector2.ZERO") # DEBUG Renamed from NULL VECTOR for clarity
 	# Return Vector2.ZERO to indicate invalid position
 	return Vector2.ZERO
 

@@ -37,8 +37,6 @@ func jump() -> void:
 		jumped.emit()
 
 func move(direction: float) -> void:
-	print("DEBUG: PlayerMovement.move called with direction: ", direction) # DEBUG
-	print("DEBUG: Velocity BEFORE move: ", character.velocity) # DEBUG
 	if direction != 0:
 		# Set velocity directly for instantaneous movement
 		character.velocity.x = direction * config.get_modified_speed()
@@ -47,7 +45,6 @@ func move(direction: float) -> void:
 	else:
 		# Instantly stop horizontal movement when input is zero
 		character.velocity.x = 0
-		print("DEBUG: Velocity AFTER stopping: ", character.velocity) # DEBUG
 		stopped_moving.emit()
 
 func drop_through_platform() -> void:
@@ -125,13 +122,13 @@ func has_platform_above() -> bool:
 	return results and results.position.y < character.global_position.y - 10 
 
 func set_facing_direction(direction: float) -> void:
-	print("DEBUG: set_facing_direction called with direction: ", direction, ", current facing_direction: ", facing_direction) # DEBUG
-	print("DEBUG: character.scale.x BEFORE flip check: ", character.scale.x) # DEBUG
 	if direction != facing_direction:
+		print("DEBUG: set_facing_direction called with NEW direction: ", direction, ", current facing_direction: ", facing_direction) # DEBUG
+		print("DEBUG: character.scale.x BEFORE flip: ", character.scale.x) # DEBUG
 		print("DEBUG: Flipping scale!") # DEBUG
-		facing_direction *= -1
+		facing_direction = direction # Correctly update facing_direction
 		character.scale.x *= -1
-	print("DEBUG: character.scale.x AFTER flip check: ", character.scale.x) # DEBUG
+		print("DEBUG: character.scale.x AFTER flip: ", character.scale.x) # DEBUG
 
 func _on_drop_timer_timeout() -> void:
 	can_drop_through = true
