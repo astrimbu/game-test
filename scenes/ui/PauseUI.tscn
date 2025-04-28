@@ -9,8 +9,8 @@ script = ExtResource("1_mkld0")
 
 [node name="Background" type="ColorRect" parent="."]
 layout_mode = 0
-offset_right = 184.0
-offset_bottom = 160.0
+offset_right = 224.0
+offset_bottom = 192.0
 color = Color(0, 0, 0, 0.196078)
 
 [node name="CenterContainer" type="CenterContainer" parent="."]

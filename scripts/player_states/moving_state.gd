@@ -4,6 +4,7 @@ extends PlayerState
 const ARRIVAL_THRESHOLD = 5.0 # How close to target position to stop
 const JUMP_HEIGHT_THRESHOLD = 10.0
 const DROP_HEIGHT_THRESHOLD = 10.0
+const HORIZONTAL_ALIGN_THRESHOLD = 5.0
 
 func enter_state(player: CharacterBody2D) -> void:
 	print("Enter MovingState")
@@ -31,11 +32,14 @@ func update_state(player: CharacterBody2D, delta: float) -> void:
 
 	# Check if we need to jump to reach the target
 	if target_pos.y < player.position.y - JUMP_HEIGHT_THRESHOLD and player.is_on_floor():
-		# Check if path is clear or if we should request jump state
-		# Simple check for now: if target is significantly higher, try jumping
-		# TODO: Add more sophisticated pathfinding or jump logic if needed
-		player.request_state_change("jumping") 
-		return 
+		# Check horizontal alignment FIRST
+		var horizontal_distance = abs(player.global_position.x - target_pos.x)
+		if horizontal_distance <= HORIZONTAL_ALIGN_THRESHOLD:
+			# If horizontally aligned, THEN request jump state
+			print("MovingState: Horizontally aligned, requesting jump state.")
+			player.request_state_change("jumping") 
+			return # Important: return here to prevent further movement logic this frame
+		# If not horizontally aligned yet, the normal movement logic below will handle moving closer.
 
 	# Check if we need to drop through to reach the target
 	if target_pos.y > player.position.y + DROP_HEIGHT_THRESHOLD and player.is_on_floor():

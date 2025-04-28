@@ -1,9 +1,10 @@
-[gd_scene load_steps=7 format=3 uid="uid://c3u7u65sb1brk"]
+[gd_scene load_steps=7 format=3 uid="uid://womgk5fkd7gj"]
 
 [ext_resource type="Script" path="res://scripts/dropped_item.gd" id="1_2quma"]
 [ext_resource type="Texture2D" uid="uid://5oskgcha2rr6" path="res://assets/coin.png" id="2_orsrw"]
 
-[sub_resource type="CircleShape2D" id="CircleShape2D_40kjv"]
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_l55id"]
+size = Vector2(48, 48)
 
 [sub_resource type="Animation" id="Animation_6wplo"]
 length = 0.001
@@ -116,17 +117,17 @@ _data = {
 "spin": SubResource("Animation_dixwf")
 }
 
-[node name="DroppedItem" type="Area2D"]
-collision_layer = 16
-collision_mask = 0
+[node name="DroppedInventoryItem" type="Area2D"]
 script = ExtResource("1_2quma")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+position = Vector2(0, -16)
+shape = SubResource("RectangleShape2D_l55id")
 
 [node name="Sprite2D" type="Sprite2D" parent="."]
 texture = ExtResource("2_orsrw")
+offset = Vector2(0, -16)
 hframes = 6
-
-[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
-shape = SubResource("CircleShape2D_40kjv")
 
 [node name="AnimationPlayer" type="AnimationPlayer" parent="."]
 libraries = {

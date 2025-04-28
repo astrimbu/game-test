@@ -156,15 +156,10 @@ func spawn_dropped_items() -> void:
 			})
 
 func spawn_world_item(item_data: Dictionary) -> void:
-	var scene_to_spawn
-	match item_data.type:
-		"coin":
-			scene_to_spawn = preload("res://scenes/DroppedCoin.tscn")
-		"inventory_item":
-			scene_to_spawn = preload("res://scenes/DroppedInventoryItem.tscn")
-		_:
-			scene_to_spawn = preload("res://scenes/DroppedItem.tscn")
-	
+	# Always use the main dropped item scene.
+	# Its initialize function will handle the specific type (coin vs inventory_item).
+	var scene_to_spawn = preload("res://scenes/DroppedItem.tscn")
+
 	var dropped_item = scene_to_spawn.instantiate()
 	get_parent().add_child(dropped_item)
 	dropped_item.initialize(item_data, global_position)
