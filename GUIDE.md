@@ -105,4 +105,10 @@ The player character now checks for ground slightly ahead before moving horizont
 
 ## Player Combat
 
-The player combat logic is managed by the `PlayerCombat` component (`scripts/components/player_combat.gd`). It determines attack properties (style, range, cooldown, animation, damage delay) based on equipped weapon or unarmed defaults. Uses Timers to manage the attack sequence (animation start, damage application delay, cooldown, animation end). Applies damage to target enemy, handles attack looping (auto-combat), listens for enemy death via EventBus, and calculates total damage. 
+The player combat logic is managed by the `PlayerCombat` component (`scripts/components/player_combat.gd`). It determines attack properties (style, range, cooldown, animation, damage delay) based on equipped weapon or unarmed defaults. Uses Timers to manage the attack sequence (animation start, damage application delay, cooldown, animation end). Applies damage to target enemy, handles attack looping (auto-combat), listens for enemy death via EventBus, and calculates total damage.
+
+### Item Pickup
+
+- **Dropped Items:** Items dropped by enemies (coins, equipment) appear on the ground.
+- **Pickup:** Click and hold the left mouse button and drag the cursor over items on the ground to pick them up. Items within range will be collected automatically.
+- **Inventory:** Collected items (except coins) are added to the player's inventory. 

@@ -24,8 +24,13 @@ var ray_length := 50
 const PICKUP_RANGE := 2000.0  # Adjust this value as needed
 const PUNCH_RANGE := 15.0 # Range within which the player can punch
 
-# Flag to track if an item was picked up on mouse down
-var item_picked_up: bool = false
+# Track mouse button state
+var is_mouse_button_down: bool = false
+# Track if any item was picked up during the current drag
+var did_pickup_during_drag: bool = false
+# Cooldown to prevent rapid re-pickup
+var pickup_cooldown: float = 0.0
+const PICKUP_COOLDOWN_DURATION: float = 0.1 # Seconds
 
 func _ready() -> void:
 	# Find the target indicator node, assuming it's a sibling of the Player node
@@ -46,7 +51,15 @@ func _ready() -> void:
 		# Ensure it's hidden initially
 		target_indicator.visible = false
 
-func _physics_process(_delta: float) -> void:
+func _physics_process(delta: float) -> void:
+	# Update pickup cooldown
+	if pickup_cooldown > 0.0:
+		pickup_cooldown -= delta
+	
+	# Handle continuous item pickup while mouse is down
+	if is_mouse_button_down and pickup_cooldown <= 0.0:
+		_try_pickup_item_at(character.get_global_mouse_position())
+
 	# Update target indicator position ONLY if we're targeting a valid enemy
 	if target_indicator and character and character.combat:
 		var enemy = character.combat.target_enemy
@@ -76,12 +89,16 @@ func handle_click(clicked_pos: Vector2) -> void:
 	handle_mouse_up(clicked_pos)
 
 func _handle_mouse_down(clicked_pos: Vector2) -> void:
-	item_picked_up = false  # Reset the flag
+	is_mouse_button_down = true
+	did_pickup_during_drag = false # Reset drag pickup flag
+
+# Separated item pickup logic into its own function
+func _try_pickup_item_at(check_pos: Vector2) -> void:
 	var space_state = character.get_world_2d().direct_space_state
 	
 	# Check for items only
 	var item_params = PhysicsPointQueryParameters2D.new()
-	item_params.position = clicked_pos
+	item_params.position = check_pos
 	item_params.collision_mask = 0b10000  # Layer 5 (Items) only
 	item_params.collide_with_areas = true
 	item_params.collide_with_bodies = false
@@ -93,20 +110,23 @@ func _handle_mouse_down(clicked_pos: Vector2) -> void:
 			var distance = character.global_position.distance_to(item.global_position)
 			if distance <= PICKUP_RANGE:
 				item.collect()
-				item_picked_up = true
+				did_pickup_during_drag = true # Set flag if item picked up
+				pickup_cooldown = PICKUP_COOLDOWN_DURATION # Start cooldown
 				if target_indicator:
 					target_indicator.visible = false
 
-func _handle_mouse_up(clicked_pos: Vector2) -> void:
-	# If an item was picked up on mouse down, don't process any other interactions
-	if item_picked_up:
+func _handle_mouse_up(_clicked_pos: Vector2) -> void:
+	is_mouse_button_down = false
+	
+	# If an item was picked up during the drag, don't process other interactions like move/attack
+	if did_pickup_during_drag:
 		return
 	
 	var space_state = character.get_world_2d().direct_space_state
 	
 	# Check for NPCs and Enemies
 	var interact_params = PhysicsPointQueryParameters2D.new()
-	interact_params.position = clicked_pos
+	interact_params.position = _clicked_pos
 	interact_params.collision_mask = 0b1100  # Layers 3 (Enemy) and 4 (NPC)
 	interact_params.collide_with_bodies = true
 	interact_params.collide_with_areas = false
@@ -122,7 +142,7 @@ func _handle_mouse_up(clicked_pos: Vector2) -> void:
 			return
 	
 	# If nothing interactive was clicked, handle as movement intent
-	var walkable_pos = get_walkable_position(clicked_pos)
+	var walkable_pos = get_walkable_position(_clicked_pos)
 	if walkable_pos != Vector2.ZERO:
 		intent_move_to.emit(walkable_pos)
 
