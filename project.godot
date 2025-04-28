@@ -28,7 +28,7 @@ window/stretch/mode="viewport"
 
 [gui]
 
-theme/custom_font="res://fantasque.tres"
+theme/default_font_antialiasing=0
 
 [input]
 

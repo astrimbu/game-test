@@ -55,6 +55,9 @@ func update_state(player: CharacterBody2D, delta: float) -> void:
 		player.move_and_slide() # Apply stop/gravity first
 		print("Reached move target.")
 		player.interaction.target_position = Vector2.ZERO # Clear target pos
+		# Hide the indicator
+		if player.target_indicator: 
+			player.target_indicator.visible = false
 		player.request_state_change("idle")
 		return
 

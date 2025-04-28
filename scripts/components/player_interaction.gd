@@ -47,30 +47,23 @@ func _ready() -> void:
 		target_indicator.visible = false
 
 func _physics_process(_delta: float) -> void:
-	# Update target indicator position if we're targeting an enemy
-	if target_indicator and character and character.combat: # Add null checks
+	# Update target indicator position ONLY if we're targeting a valid enemy
+	if target_indicator and character and character.combat:
 		var enemy = character.combat.target_enemy
-		# DEBUG:
-		# print("DEBUG Interaction: Physics process running. Target Indicator node: ", target_indicator)
-		# print("DEBUG Interaction: Current target_enemy: ", enemy)
-		
-		if is_instance_valid(enemy):
-			if not enemy.get_is_dead():
-				# Enemy is valid and alive, update indicator position
-				# Safely get offset, default to 0.0 if property doesn't exist
-				var offset = enemy.indicator_offset if "indicator_offset" in enemy else 0.0
-				var target_pos = enemy.global_position - Vector2(0, offset)
-				_update_target_indicator(target_pos)
-			else:
-				# Enemy is valid but dead, hide indicator
-				if target_indicator.visible:
-					target_indicator.visible = false
-		else:
-			# No valid enemy target, hide indicator
-			if target_indicator.visible:
-				target_indicator.visible = false
-	# Consider if indicator should also be hidden if character.combat is null?
-	# The outer check handles this implicitly.
+		# Check if enemy is valid and alive
+		if is_instance_valid(enemy) and not enemy.get_is_dead():
+			# Enemy is valid and alive, update indicator position
+			var offset = enemy.indicator_offset if "indicator_offset" in enemy else 0.0
+			var indicator_pos = enemy.global_position - Vector2(0, offset)
+			# Use the interaction component's own reference if available
+			if target_indicator: # Ensure the node reference is valid
+				target_indicator.global_position = indicator_pos
+				# Make sure it's visible if we are updating it
+				# This might be redundant if Player's intent handlers handle visibility,
+				# but ensures it stays visible if it somehow got hidden.
+				target_indicator.visible = true 
+	# No 'else' clause here, so we don't hide the indicator if there's no enemy
+	# (e.g., when moving to a point)
 
 func handle_mouse_down(clicked_pos: Vector2) -> void:
 	_handle_mouse_down(clicked_pos)

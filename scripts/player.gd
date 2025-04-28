@@ -188,20 +188,15 @@ func _on_intent_move_to(position: Vector2):
 	# Clear other targets
 	combat.target_enemy = null
 	interaction.target_npc = null # Assuming interaction still holds this temporarily
-	# Clear target indicator or update to move position?
-	# Let's hide it for simple moves for now.
-	if target_indicator: target_indicator.visible = false
-	
-	# Set movement target (Player holds the primary target position now?)
-	# Let's assume states will read from interaction.target_position for now.
-	interaction.target_position = position 
-	
-	# TODO: Check if position is valid before changing state?
+	# Show the indicator at the move position
 	if position != Vector2.ZERO:
+		_update_target_indicator(position)
+		interaction.target_position = position 
 		set_state("moving")
 	else:
 		print("WARN: Invalid move position received.")
-		# Maybe go idle or do nothing?
+		if target_indicator: target_indicator.visible = false # Hide if position is invalid
+		interaction.target_position = Vector2.ZERO # Ensure target is cleared
 		set_state("idle") 
 
 func _on_intent_attack(enemy: CharacterBody2D):
