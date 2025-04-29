@@ -105,9 +105,20 @@ func _on_damage_apply_timer_timeout() -> void:
 		attack_timer.start(current_attack_cooldown)
 
 func _on_animation_complete() -> void:
-	print("Combat: Attack animation complete.")
+	print("Combat: Attack animation complete timer finished.")
+	# Check if we should stop the combat loop (target dead or auto-combat disabled)
 	if not auto_combat_enabled or (is_instance_valid(target_enemy) and target_enemy.get_is_dead()):
-		stop_attacking()
+		print("Combat: Conditions met to stop attacking loop.")
+		# Stop timers and reset flags *first*
+		stop_attacking() 
+		# THEN tell the player to go idle, ensuring full animation duration passed
+		if not current_attack_animation.is_empty():
+			EventBus.combat_animation_ended.emit(current_attack_animation)
+		else:
+			EventBus.combat_animation_ended.emit("punch") # Fallback
+		# Reset animation property *after* emitting the signal
+		current_attack_animation = ""
+	# Else: Loop continues, do nothing here, let the attack_timer trigger the next one.
 
 func _on_enemy_killed(enemy: BaseEnemy) -> void:
 	# Check if the killed enemy was our current target
@@ -164,26 +175,22 @@ func start_attacking(target: CharacterBody2D) -> void:
 func stop_attacking() -> void:
 	# Only print/emit if we were actually attacking
 	if auto_combat_enabled or is_attacking:
-		print("Combat: Stopping attacking loop.")
+		print("Combat: Stopping attacking loop (flags/timers only).")
 		auto_combat_enabled = false
 		# Don't clear target_enemy here, Player/States manage the canonical target
 		is_attacking = false
 		attack_timer.stop()
 		damage_apply_timer.stop()
 		animation_complete_timer.stop()
-		# Ensure animation stops using the *correct* animation name for this attack cycle
-		if not current_attack_animation.is_empty():
-			EventBus.combat_animation_ended.emit(current_attack_animation)
-		else:
-			EventBus.combat_animation_ended.emit("punch") # Fallback
+		# REMOVED: EventBus emit here. Moved to _on_animation_complete
 
-		# Reset current attack properties
+		# Reset current attack properties (except animation name, needed for final emit)
 		current_attack_style = ""
 		current_attack_range = 0.0
 		current_attack_cooldown = 1.0
-		current_attack_animation = ""
+		# current_attack_animation = "" # Keep this until after emit in _on_animation_complete
 		current_damage_delay = 0.0
-		current_animation_duration = 0.0
+		# current_animation_duration = 0.0 # Keep this? May not matter
 
 func take_damage(amount: int, source: Node) -> void:
 	EventBus.publish_damage_taken(amount, source)

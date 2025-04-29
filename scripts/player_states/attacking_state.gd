@@ -43,60 +43,43 @@ func update_state(player: CharacterBody2D, delta: float) -> void:
 	player.velocity.x = 0
 	player.move_and_slide()
 
-	# --- Ensure target is still valid conceptually --- 
-	# We need a reference to the target for facing direction, 
-	# but don't transition state based on death *yet*.
+	# --- Check Target Validity and State Transitions ---
+	
+	# MODIFIED CHECK:
+	# Only transition out due to invalid target IF the combat component
+	# is NOT actively in the middle of an attack animation cycle.
 	if not is_instance_valid(player.target_enemy):
-		print("AttackingState: Target became invalid (instance lost). Idling.")
-		# Combat should already be stopped or stopping via PlayerCombat logic
-		player.request_state_change("idle")
-		return
+		if not player.combat.is_attacking:
+			print("AttackingState: Target invalid AND attack anim finished. Idling.")
+			player.request_state_change("idle")
+			return
+		else:
+			# Target is invalid, but animation is still playing.
+			# Do nothing here, let PlayerCombat finish the animation.
+			# PlayerCombat._on_animation_complete will handle stopping combat
+			# and emitting the signal that Player uses to finally go idle.
+			print("AttackingState: Target invalid, but waiting for attack anim to finish...") # DEBUG
+			return # Keep processing gravity/movement
 		
-	# Keep facing the enemy (even if they are dead, face the corpse briefly)
+	# Target is valid, keep facing the enemy
 	var enemy_dir = sign(player.target_enemy.global_position.x - player.global_position.x)
 	if enemy_dir != 0:
 		player.movement.set_facing_direction(enemy_dir)
 
-	# --- Timer Management ---
-	# There are three critical timers that must complete:
-	# 1. damage_apply_timer: Controls when in the animation damage is dealt
-	# 2. attack_timer: Controls cooldown between attacks
-	# 3. animation_complete_timer: Ensures full animation plays out
-	var damage_timer_stopped = player.combat.damage_apply_timer.is_stopped()
-	var attack_timer_stopped = player.combat.attack_timer.is_stopped()
-	var animation_timer_stopped = player.combat.animation_complete_timer.is_stopped()
-
-	# Don't interrupt the attack cycle if any timer is still running
-	# This ensures animations complete even if the enemy dies mid-attack
-	if not damage_timer_stopped or not attack_timer_stopped or not animation_timer_stopped:
-		return
+	# --- Wait for Combat Component to Signal Completion --- 
+	# PlayerCombat now manages the timers and signals when an attack cycle
+	# (including full animation) is truly complete or stopped.
+	# AttackingState just needs to wait for Player to be transitioned
+	# out by signals handled in player.gd (_on_combat_animation_ended or _on_enemy_killed)
+	# or if the player initiates a new action via input.
 	
-	# --- All timers are stopped --- 
-	# A full attack cycle just completed.
-	print("AttackingState: All timers stopped. Checking target status and range.") # DEBUG
+	# Removed timer checks here, they are handled by PlayerCombat and Player signal connections.
 
-	# Only check death status after all timers complete
-	# This ensures the full animation plays even when killing an enemy
-	if player.target_enemy.get_is_dead():
-		print("AttackingState: Target is dead after attack cycle finished. Idling.")
-		player.request_state_change("idle")
-		return
+	# Check if enemy moved out of range *after* an attack cycle completes?
+	# This check needs rethinking. Maybe PlayerCombat should emit a different signal?
+	# For now, rely on the player clicking again if enemy moves away.
 
-	# Target is alive, check if it's still in range for the *next* attack.
-	var distance = player.global_position.distance_to(player.target_enemy.global_position)
-	var current_attack_range = player.combat.get_current_attack_range()
-	var height_difference = abs(player.global_position.y - player.target_enemy.global_position.y)
-
-	if distance > current_attack_range or height_difference >= player.config.VERTICAL_TOLERANCE:
-		# Target is alive but now out of range.
-		print("AttackingState: Target moved out of range after full attack cycle (Dist: %.1f, Range: %.1f). Approaching." % [distance, current_attack_range])
-		player.request_state_change("approaching_enemy")
-		return
-	else:
-		# Target is alive and still in range.
-		# PlayerCombat._on_attack_cooldown_finished should handle starting the next attack.
-		print("AttackingState: Still in range after full cycle. PlayerCombat will restart attack.") # DEBUG
-		pass # Do nothing, wait for PlayerCombat's timer signal
+	# print("AttackingState: Update loop finished, waiting for signals or input.") # DEBUG
 
 func exit_state(player: CharacterBody2D) -> void:
 	print("Exit AttackingState")

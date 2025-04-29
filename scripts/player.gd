@@ -14,6 +14,7 @@ var states: Dictionary = {}
 @onready var animation_player: AnimationPlayer = $AnimationPlayer
 @onready var target_indicator = $"../TargetIndicator"
 @onready var resources: PlayerResources = $Resources
+@onready var weapon_sprite: Sprite2D = $WeaponSprite
 
 # Forward some commonly accessed properties to keep state code cleaner
 var gravity: float = ProjectSettings.get_setting("physics/2d/default_gravity")
@@ -73,13 +74,27 @@ func _ready():
 	
 	# Start in idle state
 	set_state("idle")
+	
+	# Initial equipment check (AFTER connecting signals)
+	# This handles cases where equipment is already set in GameState
+	# before the player node is fully ready and connected to signals.
+	var initial_weapon = GameState.player_data.equipment.get("weapon")
+	if initial_weapon:
+		_on_equipment_updated("weapon", initial_weapon)
+	else:
+		# Ensure weapon sprite is hidden if no initial weapon
+		if weapon_sprite:
+			weapon_sprite.visible = false
 
 func _connect_component_signals() -> void:
 	# Movement signals
 	movement.jumped.connect(func(): animation_player.play("jump"))
 	movement.started_moving.connect(func(): animation_player.play("walk"))
 	movement.stopped_moving.connect(func(): 
-		if not is_attacking:
+		# ADDED CHECK: Only play idle if we are NOT in AttackingState 
+		# AND combat component also says we are not attacking.
+		# This prevents interrupting the end of an attack animation.
+		if not (current_state is AttackingState) and not is_attacking:
 			animation_player.play("idle")
 	)
 	
@@ -111,6 +126,9 @@ func _connect_component_signals() -> void:
 	interaction.intent_move_to.connect(_on_intent_move_to)
 	interaction.intent_attack.connect(_on_intent_attack)
 	interaction.intent_interact.connect(_on_intent_interact)
+	
+	# Connect Inventory Manager signals
+	InventoryManager.equipment_updated.connect(_on_equipment_updated)
 
 func _physics_process(delta: float) -> void:
 	if current_state:
@@ -245,3 +263,14 @@ func _update_target_indicator(pos: Vector2) -> void:
 	if target_indicator:
 		target_indicator.global_position = pos
 		target_indicator.visible = true
+
+# Handle Equipment Updates
+func _on_equipment_updated(slot_type: String, item: ItemData) -> void:
+	if slot_type == "weapon": # Check if the updated slot is the weapon slot
+		if item: # An item was equipped
+			# Use the item's icon directly
+			weapon_sprite.texture = item.icon
+			weapon_sprite.visible = true
+		else: # The slot was emptied (item unequipped)
+			weapon_sprite.texture = null
+			weapon_sprite.visible = false
