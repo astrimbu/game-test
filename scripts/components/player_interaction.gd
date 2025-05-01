@@ -30,7 +30,7 @@ var is_mouse_button_down: bool = false
 var did_pickup_during_drag: bool = false
 # Cooldown to prevent rapid re-pickup
 var pickup_cooldown: float = 0.0
-const PICKUP_COOLDOWN_DURATION: float = 0.1 # Seconds
+const PICKUP_COOLDOWN_DURATION: float = 0.01 # Seconds
 
 func _ready() -> void:
 	# Find the target indicator node, assuming it's a sibling of the Player node

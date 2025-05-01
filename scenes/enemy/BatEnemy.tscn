@@ -1,8 +1,9 @@
-[gd_scene load_steps=8 format=3 uid="uid://b1is2meplsgd8"]
+[gd_scene load_steps=10 format=3 uid="uid://b1is2meplsgd8"]
 
 [ext_resource type="Script" path="res://scripts/enemies/bat_enemy.gd" id="1_4rhy8"]
 [ext_resource type="Texture2D" uid="uid://dm6wf7cyj23e3" path="res://assets/Bat2 idle.png" id="3_2hqll"]
 [ext_resource type="Script" path="res://scripts/enemies/enemy_movement_controller.gd" id="3_2s2hu"]
+[ext_resource type="Texture2D" uid="uid://b3ffeqyfmbfe7" path="res://assets/Bat2 death.png" id="3_xryy1"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_aww85"]
 size = Vector2(48, 72)
@@ -112,9 +113,63 @@ tracks/3/keys = {
 "values": [0, 1, 2, 3]
 }
 
+[sub_resource type="Animation" id="Animation_si8bo"]
+resource_name = "death"
+length = 0.5
+step = 0.1
+tracks/0/type = "value"
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/path = NodePath("Sprite2D:hframes")
+tracks/0/interp = 1
+tracks/0/loop_wrap = true
+tracks/0/keys = {
+"times": PackedFloat32Array(0),
+"transitions": PackedFloat32Array(1),
+"update": 1,
+"values": [5]
+}
+tracks/1/type = "value"
+tracks/1/imported = false
+tracks/1/enabled = true
+tracks/1/path = NodePath("Sprite2D:vframes")
+tracks/1/interp = 1
+tracks/1/loop_wrap = true
+tracks/1/keys = {
+"times": PackedFloat32Array(0),
+"transitions": PackedFloat32Array(1),
+"update": 1,
+"values": [1]
+}
+tracks/2/type = "value"
+tracks/2/imported = false
+tracks/2/enabled = true
+tracks/2/path = NodePath("Sprite2D:texture")
+tracks/2/interp = 1
+tracks/2/loop_wrap = true
+tracks/2/keys = {
+"times": PackedFloat32Array(0),
+"transitions": PackedFloat32Array(1),
+"update": 1,
+"values": [ExtResource("3_xryy1")]
+}
+tracks/3/type = "value"
+tracks/3/imported = false
+tracks/3/enabled = true
+tracks/3/path = NodePath("Sprite2D:frame")
+tracks/3/interp = 1
+tracks/3/loop_wrap = true
+tracks/3/keys = {
+"times": PackedFloat32Array(0, 0.1, 0.2, 0.3, 0.4),
+"transitions": PackedFloat32Array(1, 1, 1, 1, 1),
+"update": 1,
+"values": [0, 1, 2, 3, 4]
+}
+
 [sub_resource type="AnimationLibrary" id="AnimationLibrary_6o02n"]
 _data = {
 "RESET": SubResource("Animation_xi3rc"),
+"death": SubResource("Animation_si8bo"),
 "idle": SubResource("Animation_n6als")
 }
 

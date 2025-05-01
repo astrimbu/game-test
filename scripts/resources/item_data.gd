@@ -14,6 +14,13 @@ enum ItemRarity { COMMON, UNCOMMON, RARE, EPIC }
 @export var stackable: bool = false
 @export var max_stack: int = 1
 
+# --- Display Properties ---
+@export_group("Display Adjustments")
+@export var dropped_scale: Vector2 = Vector2(1, 1)  # Scale when dropped on ground
+@export var dropped_offset: Vector2 = Vector2.ZERO # Positional offset when dropped
+@export var ui_icon_offset: Vector2 = Vector2.ZERO # Positional offset in UI slots
+@export_group("") # End group
+
 # Equipment-specific properties
 @export var equip_slot: String = ""  # "head", "chest", "weapon", etc.
 @export var stats: Dictionary = {}    # {"damage": 5, "defense": 3, etc.}

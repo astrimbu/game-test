@@ -1,8 +1,8 @@
 extends Node
 
 # Combat signals
-signal enemy_hit(enemy: CharacterBody2D)
-signal enemy_killed(enemy: CharacterBody2D)
+signal enemy_hit(enemy)
+signal enemy_killed(enemy)
 
 # Item signals
 signal item_collected(item_data: Dictionary)  # coins
@@ -44,8 +44,8 @@ signal combat_animation_started(animation_name: String)
 signal combat_animation_ended(animation_name: String)
 
 # Spawn/Respawn signals
-signal enemy_spawned(enemy: BaseEnemy, position: Vector2)
-signal enemy_respawn_requested(enemy_type: String, position: Vector2)
+signal enemy_spawned(enemy, position)
+signal enemy_respawn_requested(enemy_type, position)
 signal wave_started(wave_number: int)
 signal wave_completed(wave_number: int)
 
@@ -58,6 +58,9 @@ signal target_lost
 # Dev tool signals
 signal game_state_reset
 signal toggle_pause
+
+# Respawn signal
+signal request_enemy_spawn(enemy_type, position)
 
 # Helper functions to emit signals and handle side effects
 func publish_enemy_hit(enemy: CharacterBody2D) -> void:
@@ -134,7 +137,8 @@ func publish_combat_state_change(new_state: String) -> void:
 			combat_ended.emit()
 
 # New spawn/respawn helper functions
-func request_enemy_spawn(enemy_type: String, position: Vector2) -> void:
+func publish_request_enemy_spawn(enemy_type: String, position: Vector2) -> void:
+	print("DEBUG: [EventBus] Emitting enemy_respawn_requested(%s, %s)" % [enemy_type, position])
 	enemy_respawn_requested.emit(enemy_type, position)
 
 func publish_enemy_spawned(enemy: BaseEnemy, position: Vector2) -> void:

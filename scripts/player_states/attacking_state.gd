@@ -17,8 +17,11 @@ const CHASE_THRESHOLD_MULTIPLIER = 1.5
 # IMPORTANT: State transitions must respect this full lifecycle to prevent
 # animations from being cut short or combat mechanics being interrupted.
 
+var _target_invalid_logged = false # Flag to reduce log spam
+
 func enter_state(player: CharacterBody2D) -> void:
 	print("Enter AttackingState")
+	_target_invalid_logged = false # Reset flag on enter
 	if not is_instance_valid(player.target_enemy) or player.target_enemy.get_is_dead():
 		print("WARN: Entering AttackingState with invalid target. Idling.")
 		player.request_state_change("idle")
@@ -58,10 +61,13 @@ func update_state(player: CharacterBody2D, delta: float) -> void:
 			# Do nothing here, let PlayerCombat finish the animation.
 			# PlayerCombat._on_animation_complete will handle stopping combat
 			# and emitting the signal that Player uses to finally go idle.
-			print("AttackingState: Target invalid, but waiting for attack anim to finish...") # DEBUG
+			if not _target_invalid_logged:
+				print("AttackingState: Target invalid, but waiting for attack anim to finish...") # DEBUG
+				_target_invalid_logged = true
 			return # Keep processing gravity/movement
 		
 	# Target is valid, keep facing the enemy
+	_target_invalid_logged = false # Reset flag if target becomes valid again
 	var enemy_dir = sign(player.target_enemy.global_position.x - player.global_position.x)
 	if enemy_dir != 0:
 		player.movement.set_facing_direction(enemy_dir)
@@ -83,6 +89,7 @@ func update_state(player: CharacterBody2D, delta: float) -> void:
 
 func exit_state(player: CharacterBody2D) -> void:
 	print("Exit AttackingState")
+	_target_invalid_logged = false # Reset flag on exit just in case
 	# Crucial: Ensure the combat loop is stopped if we exit this state for any reason
 	player.combat.stop_attacking()
 

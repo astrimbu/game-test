@@ -49,10 +49,10 @@ This directory contains the core game logic.
         *   `event_bus.gd`: A global event system (Singleton/Autoload) for decoupled communication. Defines many signals for various game events (combat, items, resources, quests, state changes, etc.). Provides `publish_*` helper functions that emit signals and sometimes perform related actions (like updating `GameState` or saving the game). Includes a debug reset function.
 *   **Enemies:** Logic related to enemy characters.
     *   `enemies/`: Directory for enemy-specific scripts and potentially states.
-        *   `base_enemy.gd`: Base class for all enemies.
+        *   `base_enemy.gd`: Base class for all enemies. Handles core logic like health, taking damage, dying (plays a "death" animation if available, disables collision/physics, then hides sprite), dropping items, and requesting respawns. Includes a `respawn()` method to reset state, re-enable collision/physics, show the sprite, and reposition the enemy.
         *   `enemy_movement_controller.gd`: Handles movement logic for enemies.
         *   `squiddy_enemy.gd`: Specific logic for the Squiddy enemy type.
-        *   `bat_enemy.gd`: Specific logic for the Bat enemy type.
+        *   `bat_enemy.gd`: Specific logic for the Bat enemy type. Defines paths to nodes (Sprite, AnimationPlayer) used by BaseEnemy.
 *   **World:** General world logic.
     *   `world.gd`: Script for the main game world scene.
 *   **Quests:** Systems for managing quests.
@@ -70,6 +70,37 @@ This directory contains the core game logic.
 *   **Resources:** Contains custom Resource script definitions (`.gd`) and pre-configured Resource instances (`.tres`).
     *   `resources/`: Directory for Resource scripts and files.
         *   *Examples:* `item_data.gd`, `player_config.gd`, `wooden_sword.tres`, `health_potion.tres`
+
+### `ItemData` Resource (`scripts/resources/item_data.gd`)
+
+This resource defines the properties of an item.
+
+- **`id`**: Unique string identifier (e.g., "simple_sword").
+- **`unique_id`**: Automatically generated unique ID for instance tracking.
+- **`name`**: Display name (e.g., "Simple Sword").
+- **`description`**: Flavor text or details.
+- **`type`**: Enum (`CONSUMABLE`, `EQUIPMENT`, `RESOURCE`).
+- **`rarity`**: Enum (`COMMON`, `UNCOMMON`, `RARE`, `EPIC`).
+- **`icon`**: `Texture2D` for UI display.
+- **`stackable`**: Boolean, can multiple instances stack in one slot?
+- **`max_stack`**: Integer, maximum stack size if stackable.
+
+#### Display Adjustments
+
+These properties control how the item looks when dropped or in UI slots:
+
+- **`dropped_scale`**: `Vector2` scale applied to the sprite when the item is dropped in the world. Default `(1, 1)`.
+- **`dropped_offset`**: `Vector2` positional offset applied when the item is dropped in the world. Added to the target ground position. Default `(0, 0)`.
+- **`ui_icon_offset`**: `Vector2` positional offset applied to the item's icon within UI slots (Inventory and Equipment). Useful for centering or adjusting specific sprites. Default `(0, 0)`.
+
+#### Equipment Properties
+
+- **`equip_slot`**: String indicating the target slot (e.g., "head", "weapon").
+- **`stats`**: Dictionary for stats provided when equipped (e.g., `{"damage": 5}`).
+
+#### Consumable Properties
+
+- **`use_effect`**: Dictionary describing the effect when used (e.g., `{"heal": 20}`).
 
 ---
 
@@ -125,8 +156,11 @@ Enemy drop logic is handled within `scripts/enemies/base_enemy.gd` in the `spawn
 
 *   **Coins:** All enemies drop their specified `coin_value`.
 *   **Items:**
-    *   Currently, only the `bat_enemy` has a chance to drop an item.
-    *   `bat_enemy` has a 1/5 (20%) chance to drop a `wooden_sword` upon death.
+    *   Currently, only the `bat_enemy` has a chance to drop items defined in its `get_random_drop` override within `base_enemy.gd`.
+    *   `bat_enemy` has a 1/3 (33%) chance to drop `hat1` (Simple Hat).
+    *   `bat_enemy` has a 1/3 (33%) chance to drop a `wooden_sword`. *(Note: The probabilities are checked sequentially).*
+    *   All enemies now play a "death" animation (if one exists with that name in their `AnimationPlayer`) when defeated, after which their sprite is hidden (managed by `base_enemy.gd`).
+    *   Both `hat1` and `wooden_sword` are defined as `ItemData` resources (`.tres` files) in `scripts/resources/` and can be picked up and equipped by the player.
     *   Other enemies currently do not drop any items.
 
 *   **Quests:** Systems for managing quests.

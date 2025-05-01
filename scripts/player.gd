@@ -15,6 +15,7 @@ var states: Dictionary = {}
 @onready var target_indicator = $"../TargetIndicator"
 @onready var resources: PlayerResources = $Resources
 @onready var weapon_sprite: Sprite2D = $WeaponSprite
+@onready var hat_sprite: Sprite2D = $HatSprite
 
 # Forward some commonly accessed properties to keep state code cleaner
 var gravity: float = ProjectSettings.get_setting("physics/2d/default_gravity")
@@ -85,6 +86,14 @@ func _ready():
 		# Ensure weapon sprite is hidden if no initial weapon
 		if weapon_sprite:
 			weapon_sprite.visible = false
+			
+	var initial_hat = GameState.player_data.equipment.get("head")
+	if initial_hat:
+		_on_equipment_updated("head", initial_hat)
+	else:
+		# Ensure hat sprite is hidden if no initial hat
+		if hat_sprite:
+			hat_sprite.visible = false
 
 func _connect_component_signals() -> void:
 	# Movement signals
@@ -266,11 +275,21 @@ func _update_target_indicator(pos: Vector2) -> void:
 
 # Handle Equipment Updates
 func _on_equipment_updated(slot_type: String, item: ItemData) -> void:
-	if slot_type == "weapon": # Check if the updated slot is the weapon slot
-		if item: # An item was equipped
-			# Use the item's icon directly
-			weapon_sprite.texture = item.icon
-			weapon_sprite.visible = true
-		else: # The slot was emptied (item unequipped)
-			weapon_sprite.texture = null
-			weapon_sprite.visible = false
+	match slot_type:
+		"weapon":
+			if weapon_sprite: # Ensure the node exists
+				if item: # An item was equipped
+					weapon_sprite.texture = item.icon
+					weapon_sprite.visible = true
+				else: # The slot was emptied (item unequipped)
+					weapon_sprite.texture = null
+					weapon_sprite.visible = false
+		"head":
+			if hat_sprite: # Ensure the node exists
+				if item: # An item was equipped
+					hat_sprite.texture = item.icon
+					hat_sprite.visible = true
+				else: # The slot was emptied (item unequipped)
+					hat_sprite.texture = null
+					hat_sprite.visible = false
+		# Add cases for other slots like "chest" if needed

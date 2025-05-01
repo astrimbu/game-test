@@ -1,0 +1,22 @@
+[gd_resource type="Resource" script_class="ItemData" load_steps=3 format=3 uid="uid://b7mdxguxuhx0"]
+
+[ext_resource type="Script" path="res://scripts/resources/item_data.gd" id="1_fqgwd"]
+[ext_resource type="Texture2D" uid="uid://y48kchddtn0u" path="res://assets/hats/Hat1.png" id="1_gj7rd"]
+
+[resource]
+script = ExtResource("1_fqgwd")
+id = "hat1"
+unique_id = ""
+name = "Simple Hat"
+description = "A basic hat."
+type = 1
+rarity = 0
+icon = ExtResource("1_gj7rd")
+stackable = false
+max_stack = 1
+dropped_scale = Vector2(2, 2)
+dropped_offset = Vector2(0, 24)
+ui_icon_offset = Vector2(0, 8)
+equip_slot = "head"
+stats = {}
+use_effect = {}

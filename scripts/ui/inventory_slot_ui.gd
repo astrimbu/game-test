@@ -17,8 +17,15 @@ func _on_inventory_updated() -> void:
 func update_slot(new_slot_data: InventorySlot) -> void:
 	slot_data = new_slot_data
 	
+	# Reset icon position first
+	item_icon.position = Vector2.ZERO # Default position
+
 	if slot_data and slot_data.item:
 		item_icon.texture = slot_data.item.icon
+		
+		# Apply offset from ItemData
+		item_icon.position = slot_data.item.ui_icon_offset 
+
 		if slot_data.amount > 1:
 			quantity_label.text = str(slot_data.amount)
 			quantity_label.show()

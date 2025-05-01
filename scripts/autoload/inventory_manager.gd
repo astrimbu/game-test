@@ -100,3 +100,12 @@ func move_inventory_item(from_slot: int, to_slot: int) -> bool:
 
 func get_inventory_slot_index(slot_data: InventorySlot) -> int:
 	return GameState.player_data.inventory.find(slot_data)
+
+# Function required by EquipmentSlotUI to get the initial item
+func get_equipped_item(slot_type: String) -> ItemData:
+	if GameState.player_data and GameState.player_data.equipment.has(slot_type):
+		var item = GameState.player_data.equipment[slot_type]
+		# Ensure we return ItemData or null
+		if item is ItemData:
+			return item
+	return null # Return null if slot doesn't exist or item isn't ItemData

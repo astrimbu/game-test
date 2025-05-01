@@ -51,6 +51,10 @@ func _ready():
 	setup_health_bar()
 	_init_enemy()
 	movement_controller.init(sprite)
+	
+	# Connect animation finished signal
+	if animation_player:
+		animation_player.animation_finished.connect(_on_animation_finished)
 
 # Virtual method for child classes to override
 func _init_enemy():
@@ -112,6 +116,7 @@ func die() -> void:
 	if is_dead:
 		return
 		
+	print("DEBUG: [%s] die() called" % self.name)
 	is_dead = true
 	velocity = Vector2.ZERO
 	
@@ -119,24 +124,55 @@ func die() -> void:
 	var type = enemy_type
 	var pos = spawn_position
 	var should_spawn = should_respawn
+	print("DEBUG: [%s] should_spawn = %s" % [self.name, should_spawn]) # Check respawn flag
 	
 	# Update player resources through EventBus
+	print("DEBUG: [%s] Publishing XP/Kill events" % self.name)
 	EventBus.publish_xp_gained(xp_value)
 	EventBus.publish_enemy_killed(self)
 	
 	# Spawn dropped items
+	print("DEBUG: [%s] Spawning dropped items" % self.name)
 	spawn_dropped_items()
 	
-	if animation_player.has_animation("die"):
-		animation_player.play("die")
-		await animation_player.animation_finished
+	print("DEBUG: [%s] Checking for 'death' animation..." % self.name)
+	# Play death animation if it exists
+	if animation_player.has_animation("death"): # Changed from "die" to "death" to match user's animation name
+		print("DEBUG: [%s] Found 'death' animation. Playing..." % self.name)
+		animation_player.play("death")
+		print("DEBUG: [%s] Hiding health bar" % self.name)
+		# Hide health bar immediately
+		health_bar.hide()
+		print("DEBUG: [%s] Disabling physics/process" % self.name)
+		# Disable collision during animation
+		set_physics_process(false)
+		set_process(false)
+		print("DEBUG: [%s] Checking/Disabling CollisionShape2D" % self.name)
+		if has_node("CollisionShape2D"): # Check if collision shape exists
+			get_node("CollisionShape2D").set_deferred("disabled", true)
+		print("DEBUG: [%s] Finished disabling collision" % self.name)
+	else:
+		# If no animation, hide immediately
+		print("DEBUG: [%s] No 'death' animation found. Hiding immediately." % self.name)
+		hide()
+		# Request respawn if needed (and no animation)
+		if should_spawn:
+			print("DEBUG: [%s] Requesting respawn (no animation) in %.1fs" % [self.name, RESPAWN_DELAY])
+			get_tree().create_timer(RESPAWN_DELAY).call_deferred("request_respawn", type, pos)
+		queue_free() # Free immediately if no animation
+		return # Exit early if no animation
 	
-	# Request respawn before freeing if needed
+	# Request respawn after starting animation (if needed)
+	print("DEBUG: [%s] Checking if respawn timer should be started..." % self.name)
 	if should_spawn:
-		await get_tree().create_timer(RESPAWN_DELAY).timeout
-		EventBus.request_enemy_spawn(type, pos)
+		print("DEBUG: [%s] Creating respawn timer (%.1fs)..." % [self.name, RESPAWN_DELAY])
+		var respawn_timer = get_tree().create_timer(RESPAWN_DELAY)
+		print("DEBUG: [%s] Connecting timer timeout to request_respawn(%s, %s)..." % [self.name, type, pos])
+		respawn_timer.timeout.connect(request_respawn.bind(type, pos))
+		print("DEBUG: [%s] Respawn timer connection attempted." % self.name)
 	
-	queue_free()
+	print("DEBUG: [%s] die() function finished (Node not freed here)." % self.name)
+	# Node is NOT freed here anymore, it's hidden in _on_animation_finished
 
 func spawn_dropped_items() -> void:
 	# Spawn coin
@@ -164,11 +200,14 @@ func spawn_world_item(item_data: Dictionary) -> void:
 	dropped_item.initialize(item_data, global_position)
 
 func get_random_drop() -> ItemData:
-	# Only bats have a chance to drop the wooden sword for now.
+	# Only bats have a chance to drop items for now.
 	if enemy_type == "bat":
-		if randf() < 0.2: # 1/5 chance
+		var drop_roll = randf()
+		if drop_roll < 0.33: # 33% chance for hat
+			return preload("res://scripts/resources/hat1.tres")
+		elif drop_roll < 0.66: # 33% chance for sword
 			return preload("res://scripts/resources/wooden_sword.tres")
-	
+
 	# Other enemies drop nothing for now, or bat failed the roll.
 	return null
 
@@ -178,6 +217,7 @@ func _on_item_collected(item_data: Dictionary):
 		GameState.emit_resource_signal("coins_changed", GameState.player_data.coins)
 
 func respawn():
+	print("DEBUG: [%s] respawn() called" % self.name)
 	# Reset position and state
 	global_position = initial_position
 	current_health = max_health
@@ -185,9 +225,17 @@ func respawn():
 	is_being_hit = false
 	health_bar.value = current_health
 	
-	# Show enemy and health bar
+	# Show enemy node, sprite, and health bar
 	show()
+	if sprite:
+		sprite.show()
 	health_bar.show()
+	
+	# Re-enable physics and collision
+	set_physics_process(true)
+	set_process(true)
+	if has_node("CollisionShape2D"): # Check if collision shape exists
+		get_node("CollisionShape2D").set_deferred("disabled", false)
 	
 	# Play idle animation if it exists
 	if animation_player.has_animation("idle"):
@@ -195,6 +243,27 @@ func respawn():
 	
 	# Reset movement controller
 	movement_controller.reset_movement()
+	print("DEBUG: [%s] respawn() finished" % self.name)
 
 func get_is_dead() -> bool:
 	return is_dead
+
+# Called when any animation finishes
+func _on_animation_finished(anim_name):
+	print("DEBUG: [%s] _on_animation_finished called with anim_name: %s" % [self.name, anim_name])
+	# Check if the death animation finished
+	if anim_name == "death":
+		print("DEBUG: [%s] 'death' animation finished. Hiding sprite." % self.name)
+		# Hide the sprite (or the whole node)
+		if sprite:
+			sprite.hide()
+		# self.hide() # Alternatively hide the whole enemy node
+		
+		# If the enemy should be removed completely *after* animation:
+		# queue_free()
+		
+		# If respawn is handled by hiding/showing, ensure physics/collision are re-enabled on respawn
+
+func request_respawn(type: String, pos: Vector2):
+	print("DEBUG: [%s] request_respawn() called by timer. Calling EventBus helper: publish_request_enemy_spawn(%s, %s)" % [self.name, type, pos])
+	EventBus.publish_request_enemy_spawn(type, pos)
